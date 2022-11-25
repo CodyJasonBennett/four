@@ -19,13 +19,10 @@
     "dist"
   ],
   "types": "./dist/index.d.ts",
-  "umd:main": "./dist/index.umd.js",
-  "unpkg": "./dist/index.umd.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
     "types": "./dist/index.d.ts",
-    "umd": "./dist/index.umd.js",
     "require": "./dist/index.js",
     "import": "./dist/index.mjs"
   },
@@ -37,7 +34,7 @@
   },
   "scripts": {
     "dev": "vite demo",
-    "build": "microbundle",
+    "build": "microbundle --raw -f modern,cjs",
     "lint": "tsc"
   }
 }
