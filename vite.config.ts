@@ -1,7 +1,7 @@
 import * as path from 'node:path'
 import { defineConfig } from 'vite'
 
-const dev = process.env.VERCEL_CI || !process.argv[2]
+const dev = process.env.CI_STATIC_BUILD || !process.argv[2]
 
 export default defineConfig(
   dev
