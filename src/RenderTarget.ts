@@ -5,7 +5,7 @@ import { Texture } from './Texture'
  */
 export class RenderTarget {
   /**
-   * Textures to write color attachments to. Default is created with `nearest` filtering.
+   * A {@link Texture} array to write color attachments to.
    */
   readonly textures: Texture[]
   /**

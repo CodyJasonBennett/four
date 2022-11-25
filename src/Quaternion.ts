@@ -156,7 +156,7 @@ export class Quaternion extends Array {
   }
 
   /**
-   * Slerps between another {@link Quaternion} with a given `t`.
+   * Slerps between another {@link Quaternion} with a given alpha — `t`.
    */
   slerp(q: Quaternion, t: number): this {
     let cosom = this.x * q.x + this.y * q.y + this.z * q.z + this.w * q.w

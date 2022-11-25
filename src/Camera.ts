@@ -10,7 +10,7 @@ export class Camera extends Object3D {
    */
   readonly projectionMatrix = new Matrix4()
   /**
-   * A camera inverse matrix. Useful for aligning transforms with the camera.
+   * A view matrix. Useful for aligning transforms with the camera.
    */
   readonly viewMatrix = new Matrix4()
 

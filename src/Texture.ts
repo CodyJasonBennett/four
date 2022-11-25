@@ -14,7 +14,7 @@ export class Texture {
 
   constructor(
     /**
-     * An image source to set this texture to.
+     * An optional {@link ImageRepresentation} to set this texture to.
      */
     public image?: ImageRepresentation,
   ) {}

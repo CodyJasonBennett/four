@@ -97,7 +97,7 @@ export class Renderer {
   }
 
   /**
-   * Sets the current render target to render into.
+   * Sets the current {@link RenderTarget} to render into.
    */
   setRenderTarget(target: RenderTarget | null) {
     this._renderTarget = target
@@ -123,7 +123,7 @@ export class Renderer {
   }
 
   /**
-   * Sets the current visible side. Will cull other sides.
+   * Sets the current visible {@link Side}. Will cull other sides.
    */
   setCullSide(side: Side = 'both'): void {
     if (side === 'both') {
@@ -136,7 +136,7 @@ export class Renderer {
   }
 
   /**
-   * Configures color and alpha blending.
+   * Configures color and alpha {@link Blending}.
    */
   setBlending(blending?: Blending): void {
     if (blending) {

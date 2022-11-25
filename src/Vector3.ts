@@ -46,14 +46,14 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Copies properties from another `Vector3`.
+   * Copies properties from another {@link Vector3}.
    */
   copy(v: Vector3): this {
     return this.set(...(v as unknown as [x: number, y: number, z: number]))
   }
 
   /**
-   * Adds a scalar or `Vector3`.
+   * Adds a scalar or {@link Vector3}.
    */
   add(t: number | Vector3): this {
     for (let i = 0; i < 3; i++) {
@@ -64,7 +64,7 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Subtracts a scalar or `Vector3`.
+   * Subtracts a scalar or {@link Vector3}.
    */
   sub(t: number | Vector3): this {
     for (let i = 0; i < 3; i++) {
@@ -75,7 +75,7 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Multiplies a scalar or `Vector3`.
+   * Multiplies a scalar or {@link Vector3}.
    */
   multiply(t: number | Vector3): this {
     for (let i = 0; i < 3; i++) {
@@ -86,7 +86,7 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Divides a scalar of `Vector3`.
+   * Divides a scalar of {@link Vector3}.
    */
   divide(t: number | Vector3): this {
     for (let i = 0; i < 3; i++) {
@@ -118,7 +118,7 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Returns the distance from another `Vector3`.
+   * Returns the distance from another {@link Vector3}.
    */
   distanceTo(v: Vector3): number {
     const x = this.x - v.x
@@ -128,28 +128,28 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Calculates the dot product between another `Vector3`.
+   * Calculates the dot product between another {@link Vector3}.
    */
   dot(v: Vector3): number {
     return this.x * v.x + this.y * v.y + this.z * v.z
   }
 
   /**
-   * Calculates the cross product between another `Vector3`.
+   * Calculates the cross product between another {@link Vector3}.
    */
   cross(v: Vector3): this {
     return this.set(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x)
   }
 
   /**
-   * Lerps between another `Vector3` with a given `t`.
+   * Lerps between another {@link Vector3} with a given alpha — `t`.
    */
   lerp(v: Vector3, t: number): this {
     return this.set((v.x - this.x) * t, (v.y - this.y) * t, (v.z - this.z) * t)
   }
 
   /**
-   * Applies rotations from a `Quaternion` to this vector.
+   * Applies rotations from a {@link Quaternion} to this vector.
    */
   applyQuaternion(q: Quaternion): this {
     // calculate quat * vector
@@ -167,7 +167,7 @@ export class Vector3 extends Array {
   }
 
   /**
-   * Applies transforms from a `Matrix4` to this vector.
+   * Applies transforms from a {@link Matrix4} to this vector.
    */
   applyMatrix4(m: Matrix4): this {
     const w = m[3] * this.x + m[7] * this.y + m[11] * this.z + m[15] || 1
