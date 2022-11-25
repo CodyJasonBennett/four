@@ -1,7 +1,7 @@
 import { Vector3 } from './Vector3'
 import type { Camera } from './Camera'
-import type { Attribute } from './Geometry'
-import type { BlendFactor, BlendOperation, Side, Blending, Uniform } from './Material'
+import { Attribute, Geometry } from './Geometry'
+import { BlendFactor, BlendOperation, Side, Blending, Uniform, Material } from './Material'
 import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
@@ -112,14 +112,16 @@ export class WebGLRenderer {
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
-  private _compiled = new WeakMap<Mesh, Compiled>()
-  private _buffers = new WeakMap<Attribute, WebGLBuffer>()
-  private _textures = new WeakMap<Texture, WebGLTexture>()
-  private _FBOs = new WeakMap<RenderTarget, WebGLFramebuffer>()
-  private _textureIndex = 0
-  private _a = new Vector3()
-  private _b = new Vector3()
-  private _c = new Vector3()
+  protected _compiled = new WeakMap<Mesh, Compiled>()
+  protected _programs = new WeakMap<Material, WebGLProgram>()
+  protected _VAOs = new WeakMap<Geometry, WebGLVertexArrayObject>()
+  protected _buffers = new WeakMap<Attribute, WebGLBuffer>()
+  protected _textures = new WeakMap<Texture, WebGLTexture>()
+  protected _FBOs = new WeakMap<RenderTarget, WebGLFramebuffer>()
+  protected _textureIndex = 0
+  protected _a = new Vector3()
+  protected _b = new Vector3()
+  protected _c = new Vector3()
 
   constructor({ canvas, context, ...rest }: Partial<WebGLRendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
@@ -312,9 +314,11 @@ export class WebGLRenderer {
     }
 
     let compiled = this._compiled.get(mesh)
-    if (!compiled) {
-      const program = this.gl.createProgram()!
-      const VAO = this.gl.createVertexArray()!
+
+    let program = this._programs.get(mesh.material)
+    if (!program) {
+      program = this.gl.createProgram()!
+      this._programs.set(mesh.material, program)
 
       const vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER)!
       this.gl.shaderSource(vertexShader, mesh.material.vertex)
@@ -338,13 +342,16 @@ export class WebGLRenderer {
 
       this.gl.deleteShader(vertexShader)
       this.gl.deleteShader(fragmentShader)
-
-      compiled = { program, VAO }
-      this._compiled.set(mesh, compiled)
     }
 
-    this.gl.bindVertexArray(compiled.VAO)
-    this.gl.useProgram(compiled.program)
+    let VAO = this._VAOs.get(mesh.geometry)
+    if (!VAO) {
+      VAO = this.gl.createVertexArray()!
+      this._VAOs.set(mesh.geometry, VAO)
+    }
+
+    this.gl.useProgram(program)
+    this.gl.bindVertexArray(VAO)
 
     for (const key in mesh.geometry.attributes) {
       const attribute = mesh.geometry.attributes[key]
@@ -356,8 +363,10 @@ export class WebGLRenderer {
         this._buffers.set(attribute, buffer)
         this.gl.bindBuffer(type, buffer)
         this.gl.bufferData(type, attribute.data, this.gl.STATIC_DRAW)
+      }
 
-        const location = this.gl.getAttribLocation(compiled.program, key)
+      if (!buffer || program !== compiled?.program || VAO !== compiled?.VAO) {
+        const location = this.gl.getAttribLocation(program, key)
         if (location !== -1) {
           const slots = Math.min(4, Math.max(1, Math.floor(attribute.size / 3)))
 
@@ -385,7 +394,12 @@ export class WebGLRenderer {
     }
 
     this._textureIndex = 0
-    for (const key in mesh.material.uniforms) this.setUniform(compiled.program, key, mesh.material.uniforms[key])
+    for (const key in mesh.material.uniforms) this.setUniform(program, key, mesh.material.uniforms[key])
+
+    if (!compiled) {
+      compiled = { program, VAO }
+      this._compiled.set(mesh, compiled)
+    }
 
     return compiled
   }
