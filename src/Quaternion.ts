@@ -1,6 +1,11 @@
 import { Vector3 } from './Vector3'
 
 /**
+ * Represents the components of a {@link Quaternion}.
+ */
+export type QuaternionTuple = [x: number, y: number, z: number, w: number]
+
+/**
  * Calculates a quaternion with a defined rotation axis (x, y, z) and magnitude (w).
  */
 export class Quaternion extends Array {
@@ -48,7 +53,7 @@ export class Quaternion extends Array {
   /**
    * Sets this quaternion's x, y, z, and w properties.
    */
-  set(...q: [x: number, y: number, z: number, w: number]): this {
+  set(...q: QuaternionTuple): this {
     for (let i = 0; i < 4; i++) {
       this[i] = q[i]
     }
@@ -60,7 +65,7 @@ export class Quaternion extends Array {
    * Copies properties from another {@link Quaternion}.
    */
   copy(q: Quaternion): this {
-    return this.set(...(q as unknown as [x: number, y: number, z: number, w: number]))
+    return this.set(...(q as unknown as QuaternionTuple))
   }
 
   /**

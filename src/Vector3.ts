@@ -2,6 +2,11 @@ import type { Quaternion } from './Quaternion'
 import type { Matrix4 } from './Matrix4'
 
 /**
+ * Represents the components of a {@link Vector3}.
+ */
+export type Vector3Tuple = [x: number, y: number, z: number]
+
+/**
  * Calculates a three-dimensional (x, y, z) vector.
  */
 export class Vector3 extends Array {
@@ -37,7 +42,7 @@ export class Vector3 extends Array {
   /**
    * Sets this vector's x, y, and z properties.
    */
-  set(...v: [x: number, y: number, z: number]): this {
+  set(...v: Vector3Tuple): this {
     for (let i = 0; i < 3; i++) {
       this[i] = v[i]
     }
@@ -49,7 +54,7 @@ export class Vector3 extends Array {
    * Copies properties from another {@link Vector3}.
    */
   copy(v: Vector3): this {
-    return this.set(...(v as unknown as [x: number, y: number, z: number]))
+    return this.set(...(v as unknown as Vector3Tuple))
   }
 
   /**

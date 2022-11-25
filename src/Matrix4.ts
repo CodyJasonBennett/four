@@ -2,6 +2,28 @@ import type { Vector3 } from './Vector3'
 import type { Quaternion } from './Quaternion'
 
 /**
+ * Represents the components of a {@link Matrix4}.
+ */
+export type Matrix4Tuple = [
+  m00: number,
+  m01: number,
+  m02: number,
+  m03: number,
+  m10: number,
+  m11: number,
+  m12: number,
+  m13: number,
+  m20: number,
+  m21: number,
+  m22: number,
+  m23: number,
+  m30: number,
+  m31: number,
+  m32: number,
+  m33: number,
+]
+
+/**
  * Calculates a 4x4 matrix.
  */
 export class Matrix4 extends Array {
@@ -30,26 +52,7 @@ export class Matrix4 extends Array {
   /**
    * Sets this matrix's elements.
    */
-  set(
-    ...m: [
-      m00: number,
-      m01: number,
-      m02: number,
-      m03: number,
-      m10: number,
-      m11: number,
-      m12: number,
-      m13: number,
-      m20: number,
-      m21: number,
-      m22: number,
-      m23: number,
-      m30: number,
-      m31: number,
-      m32: number,
-      m33: number,
-    ]
-  ): this {
+  set(...m: Matrix4Tuple): this {
     for (let i = 0; i < 16; i++) {
       this[i] = m[i]
     }
@@ -61,26 +64,7 @@ export class Matrix4 extends Array {
    * Copies properties from another {@link Matrix4}.
    */
   copy(m: Matrix4): this {
-    return this.set(
-      ...(m as unknown as [
-        m00: number,
-        m01: number,
-        m02: number,
-        m03: number,
-        m10: number,
-        m11: number,
-        m12: number,
-        m13: number,
-        m20: number,
-        m21: number,
-        m22: number,
-        m23: number,
-        m30: number,
-        m31: number,
-        m32: number,
-        m33: number,
-      ]),
-    )
+    return this.set(...(m as unknown as Matrix4Tuple))
   }
 
   /**
@@ -345,22 +329,22 @@ export class Matrix4 extends Array {
     const invDet = 1 / det
 
     return this.set(
-      (m[5] * b11 - m[6] * b10 + m[7] * b09) * invDet,
-      (m[2] * b10 - m[1] * b11 - m[3] * b09) * invDet,
-      (m[13] * b05 - m[14] * b04 + m[15] * b03) * invDet,
+      m[5] * b11 - m[6] * b10 + m[7] * b09,
+      m[2] * b10 - m[1] * b11 - m[3] * b09,
+      m[13] * b05 - m[14] * b04 + m[15] * b03,
       0,
-      (m[6] * b08 - m[4] * b11 - m[7] * b07) * invDet,
-      (m[0] * b11 - m[2] * b08 + m[3] * b07) * invDet,
-      (m[14] * b02 - m[12] * b05 - m[15] * b01) * invDet,
+      m[6] * b08 - m[4] * b11 - m[7] * b07,
+      m[0] * b11 - m[2] * b08 + m[3] * b07,
+      m[14] * b02 - m[12] * b05 - m[15] * b01,
       0,
-      (m[4] * b10 - m[5] * b08 + m[7] * b06) * invDet,
-      (m[1] * b08 - m[0] * b10 - m[3] * b06) * invDet,
-      (m[12] * b04 - m[13] * b02 + m[15] * b00) * invDet,
+      m[4] * b10 - m[5] * b08 + m[7] * b06,
+      m[1] * b08 - m[0] * b10 - m[3] * b06,
+      m[12] * b04 - m[13] * b02 + m[15] * b00,
       0,
       0,
       0,
       0,
       1,
-    )
+    ).multiply(invDet)
   }
 }
