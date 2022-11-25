@@ -112,7 +112,6 @@ export class WebGLRenderer {
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
-  private _renderTarget: RenderTarget | null = null
   private _compiled = new WeakMap<Mesh, Compiled>()
   private _buffers = new WeakMap<Attribute, WebGLBuffer>()
   private _textures = new WeakMap<Texture, WebGLTexture>()
@@ -143,13 +142,62 @@ export class WebGLRenderer {
   setSize(width: number, height: number): void {
     this.canvas.width = width
     this.canvas.height = height
+    this.gl.viewport(0, 0, width, height)
   }
 
   /**
    * Sets the current {@link RenderTarget} to render into.
    */
-  setRenderTarget(target: RenderTarget | null) {
-    this._renderTarget = target
+  setRenderTarget(renderTarget: RenderTarget | null): void {
+    if (!renderTarget) {
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+      return this.gl.viewport(0, 0, this.canvas.width, this.canvas.height)
+    }
+
+    let FBO = this._FBOs.get(renderTarget)
+    if (!FBO || renderTarget.needsUpdate) {
+      if (FBO) this.gl.deleteFramebuffer(FBO)
+      FBO = this.gl.createFramebuffer()!
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
+
+      const attachments: number[] = []
+
+      let attachment = this.gl.COLOR_ATTACHMENT0
+      for (const texture of renderTarget.textures) {
+        attachments.push(attachment)
+
+        let target = this._textures.get(texture)
+        if (!target) {
+          target = this.gl.createTexture()!
+          this.gl.bindTexture(this.gl.TEXTURE_2D, target)
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST)
+          this._textures.set(texture, target)
+          texture.needsUpdate = false
+        }
+        this.gl.bindTexture(this.gl.TEXTURE_2D, target)
+        this.gl.texImage2D(
+          this.gl.TEXTURE_2D,
+          0,
+          this.gl.RGBA,
+          renderTarget.width,
+          renderTarget.height,
+          0,
+          this.gl.RGBA,
+          this.gl.UNSIGNED_BYTE,
+          null,
+        )
+
+        this.gl.framebufferTexture2D(this.gl.DRAW_FRAMEBUFFER, attachment, this.gl.TEXTURE_2D, target, 0)
+        attachment++
+      }
+      this.gl.drawBuffers(attachments)
+      renderTarget.needsUpdate = false
+
+      this._FBOs.set(renderTarget, FBO)
+    }
+
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
+    this.gl.viewport(0, 0, renderTarget.width, renderTarget.height)
   }
 
   /**
@@ -248,13 +296,6 @@ export class WebGLRenderer {
   }
 
   /**
-   * Clears color and depth buffers.
-   */
-  clear(bits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT) {
-    this.gl.clear(bits)
-  }
-
-  /**
    * Compiles a mesh or program and sets initial uniforms.
    */
   compile(mesh: Mesh, camera?: Camera): Compiled {
@@ -350,6 +391,13 @@ export class WebGLRenderer {
   }
 
   /**
+   * Clears color and depth buffers.
+   */
+  clear(bits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT): void {
+    this.gl.clear(bits)
+  }
+
+  /**
    * Returns a list of visible meshes. Will depth-sort with a camera if available.
    */
   sort(scene: Object3D, camera?: Camera): Mesh[] {
@@ -376,56 +424,6 @@ export class WebGLRenderer {
    * Renders a scene of objects with an optional camera.
    */
   render(scene: Object3D, camera?: Camera): void {
-    if (this._renderTarget) {
-      let FBO = this._FBOs.get(this._renderTarget)
-      if (!FBO || this._renderTarget.needsUpdate) {
-        if (FBO) this.gl.deleteFramebuffer(FBO)
-        FBO = this.gl.createFramebuffer()!
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
-
-        const attachments: number[] = []
-
-        let attachment = this.gl.COLOR_ATTACHMENT0
-        for (const texture of this._renderTarget.textures) {
-          attachments.push(attachment)
-
-          let target = this._textures.get(texture)
-          if (!target) {
-            target = this.gl.createTexture()!
-            this.gl.bindTexture(this.gl.TEXTURE_2D, target)
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST)
-            this._textures.set(texture, target)
-            texture.needsUpdate = false
-          }
-          this.gl.bindTexture(this.gl.TEXTURE_2D, target)
-          this.gl.texImage2D(
-            this.gl.TEXTURE_2D,
-            0,
-            this.gl.RGBA,
-            this._renderTarget.width,
-            this._renderTarget.height,
-            0,
-            this.gl.RGBA,
-            this.gl.UNSIGNED_BYTE,
-            null,
-          )
-
-          this.gl.framebufferTexture2D(this.gl.DRAW_FRAMEBUFFER, attachment, this.gl.TEXTURE_2D, target, 0)
-          attachment++
-        }
-        this.gl.drawBuffers(attachments)
-        this._renderTarget.needsUpdate = false
-
-        this._FBOs.set(this._renderTarget, FBO)
-      }
-
-      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
-      this.gl.viewport(0, 0, this._renderTarget.width, this._renderTarget.height)
-    } else {
-      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
-      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height)
-    }
-
     if (this.autoClear) this.clear()
 
     camera?.updateMatrix()

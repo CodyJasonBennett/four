@@ -206,7 +206,7 @@ export class Quaternion extends Array {
   /**
    * Rotates this quaternion from `eye` to `target`, assuming `up` as world-space up.
    */
-  lookAt(eye: Vector3, target: Vector3, up: Vector3) {
+  lookAt(eye: Vector3, target: Vector3, up: Vector3): this {
     const z = this._a.copy(eye).sub(target)
 
     // eye and target are in the same position
