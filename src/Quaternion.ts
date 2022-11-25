@@ -156,6 +156,20 @@ export class Quaternion extends Array {
   }
 
   /**
+   * Applies this quaternion's rotation axis and angle to `axis`.
+   */
+  getAxisAngle(axis: Vector3): Vector3 {
+    const rad = Math.acos(this.w) * 2
+    const s = Math.sin(rad / 2)
+
+    if (s > Number.EPSILON) {
+      return axis.set(this.x / s, this.y / s, this.z / s)
+    } else {
+      return axis.set(1, 0, 0)
+    }
+  }
+
+  /**
    * Slerps between another {@link Quaternion} with a given alpha — `t`.
    */
   slerp(q: Quaternion, t: number): this {
