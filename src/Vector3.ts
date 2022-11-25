@@ -145,20 +145,20 @@ export class Vector3 extends Array {
    * Lerps between another {@link Vector3} with a given alpha — `t`.
    */
   lerp(v: Vector3, t: number): this {
-    return this.set((v.x - this.x) * t, (v.y - this.y) * t, (v.z - this.z) * t)
+    return this.set(v.x - this.x, v.y - this.y, v.z - this.z).multiply(t)
   }
 
   /**
    * Applies rotations from a {@link Quaternion} to this vector.
    */
   applyQuaternion(q: Quaternion): this {
-    // calculate quat * vector
+    // Calculate quat * vector
     const ix = q.w * this.x + q.y * this.z - q.z * this.y
     const iy = q.w * this.y + q.z * this.x - q.x * this.z
     const iz = q.w * this.z + q.x * this.y - q.y * this.x
     const iw = -q.x * this.x - q.y * this.y - q.z * this.z
 
-    // calculate result * inverse quat
+    // Calculate result * inverse quat
     return this.set(
       ix * q.w + iw * -q.x + iy * -q.z - iz * -q.y,
       iy * q.w + iw * -q.y + iz * -q.x - ix * -q.z,
@@ -173,9 +173,9 @@ export class Vector3 extends Array {
     const w = m[3] * this.x + m[7] * this.y + m[11] * this.z + m[15] || 1
 
     return this.set(
-      (m[0] * this.x + m[4] * this.y + m[8] * this.z + m[12]) / w,
-      (m[1] * this.x + m[5] * this.y + m[9] * this.z + m[13]) / w,
-      (m[2] * this.x + m[6] * this.y + m[10] * this.z + m[14]) / w,
-    )
+      m[0] * this.x + m[4] * this.y + m[8] * this.z + m[12],
+      m[1] * this.x + m[5] * this.y + m[9] * this.z + m[13],
+      m[2] * this.x + m[6] * this.y + m[10] * this.z + m[14],
+    ).divide(w)
   }
 }

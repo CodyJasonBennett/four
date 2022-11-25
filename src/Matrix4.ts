@@ -338,9 +338,10 @@ export class Matrix4 extends Array {
     const b10 = m[9] * m[15] - m[11] * m[13]
     const b11 = m[10] * m[15] - m[11] * m[14]
 
-    // Calculate the determinant
+    // Make sure we're not dividing by zero
     const det = m.determinant()
     if (!det) return this
+
     const invDet = 1 / det
 
     return this.set(
