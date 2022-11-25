@@ -1,4 +1,4 @@
-import { Vector3, Camera } from '../src'
+import { Vector3, Camera } from 'four'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
 enum BUTTONS {

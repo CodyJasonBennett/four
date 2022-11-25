@@ -1,15 +1,17 @@
 {
   "name": "four",
   "version": "0.0.0",
-  "description": "Minimal three-like graphics library in 4KB.",
+  "description": "Minimal three.js alternative in 4KB.",
   "keywords": [
     "3d",
-    "rendering",
+    "graphics",
     "compute",
     "webgl",
     "webgpu",
     "webxr",
-    "shaders"
+    "shaders",
+    "three",
+    "minimal"
   ],
   "author": "Cody Bennett (https://github.com/CodyJasonBennett)",
   "homepage": "https://github.com/CodyJasonBennett/four",

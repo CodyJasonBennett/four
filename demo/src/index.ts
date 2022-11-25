@@ -1,4 +1,4 @@
-import { WebGLRenderer, PerspectiveCamera, Object3D, Geometry, Material, Mesh } from '../src'
+import { WebGLRenderer, PerspectiveCamera, Object3D, Geometry, Material, Mesh } from 'four'
 import { OrbitControls } from './OrbitControls'
 
 const renderer = new WebGLRenderer()
