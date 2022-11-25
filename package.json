@@ -1,7 +1,7 @@
 {
   "name": "four",
   "version": "0.0.0",
-  "description": "Modern three-like graphics library in 4KB.",
+  "description": "Minimal three-like graphics library in 4KB.",
   "keywords": [
     "3d",
     "rendering",
@@ -16,29 +16,28 @@
   "repository": "https://github.com/CodyJasonBennett/four",
   "license": "MIT",
   "files": [
-    "dist/*",
-    "src/*"
+    "dist"
   ],
   "types": "./dist/index.d.ts",
+  "umd:main": "./dist/index.umd.js",
+  "unpkg": "./dist/index.umd.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
     "types": "./dist/index.d.ts",
+    "umd": "./dist/index.umd.js",
     "require": "./dist/index.js",
     "import": "./dist/index.mjs"
   },
   "sideEffects": false,
   "devDependencies": {
-    "@types/node": "^18.11.9",
+    "microbundle": "^0.15.1",
     "typescript": "^4.9.3",
-    "vite": "2.6.0-beta.1"
+    "vite": "^3.2.4"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite demo",
+    "build": "microbundle",
     "lint": "tsc"
-  },
-  "dependencies": {
-    "gl-matrix": "^3.4.3"
   }
 }

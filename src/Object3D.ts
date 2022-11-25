@@ -1,4 +1,6 @@
-import { mat4, quat, vec3 } from 'gl-matrix'
+import { Matrix4 } from './Matrix4'
+import { Quaternion } from './Quaternion'
+import { Vector3 } from './Vector3'
 
 /**
  * Represents an Object3D traversal callback.
@@ -12,23 +14,23 @@ export class Object3D {
   /**
    * Combined transforms of the object in world space.
    */
-  readonly matrix = mat4.create()
+  readonly matrix = new Matrix4()
   /**
    * Local quaternion for this object and its descendants. Default is `0, 0, 0, 1`.
    */
-  readonly quaternion = quat.create()
+  readonly quaternion = new Quaternion()
   /**
    * Local position for this object and its descendants. Default is `0, 0, 0`.
    */
-  readonly position = vec3.create()
+  readonly position = new Vector3()
   /**
    * Local scale for this object and its descendants. Default is `1, 1, 1`.
    */
-  readonly scale = vec3.set(vec3.create(), 1, 1, 1)
+  readonly scale = new Vector3(1, 1, 1)
   /**
    * Used to orient the object when using the `lookAt` method. Default is `0, 1, 0`.
    */
-  readonly up = vec3.set(vec3.create(), 0, 1, 0)
+  readonly up = new Vector3(0, 1, 0)
   /**
    * An array of child objects in the scene graph.
    */
@@ -49,18 +51,16 @@ export class Object3D {
   /**
    * Rotates to face a point in world space.
    */
-  lookAt(target: vec3): void {
-    mat4.lookAt(this.matrix, this.position, target, this.up)
-    mat4.getRotation(this.quaternion, this.matrix)
+  lookAt(target: Vector3): void {
+    this.quaternion.lookAt(this.position, target, this.up)
   }
 
   /**
    * Used internally to calculate matrix transforms.
    */
   updateMatrix(): void {
-    if (this.matrixAutoUpdate)
-      mat4.fromRotationTranslationScale(this.matrix, this.quaternion, this.position, this.scale)
-    if (this.parent) mat4.multiply(this.matrix, this.matrix, this.parent.matrix)
+    if (this.matrixAutoUpdate) this.matrix.compose(this.position, this.quaternion, this.scale)
+    if (this.parent) this.matrix.multiply(this.parent.matrix)
     for (const child of this.children) child.updateMatrix()
   }
 

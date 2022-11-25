@@ -1,5 +1,5 @@
-import { mat4, mat3 } from 'gl-matrix'
 import { Object3D } from './Object3D'
+import { Matrix4 } from './Matrix4'
 import { Geometry } from './Geometry'
 import { Material } from './Material'
 
@@ -15,11 +15,11 @@ export class Mesh extends Object3D {
   /**
    * World space transforms relative to the active camera.
    */
-  readonly modelViewMatrix = mat4.create()
+  readonly modelViewMatrix = new Matrix4()
   /**
    * Normalized directional transforms. Useful for physics or lighting.
    */
-  readonly normalMatrix = mat3.create()
+  readonly normalMatrix = new Matrix4()
   /**
    * Which {@link Mode} to render with. Default is `triangles`.
    */

@@ -1,5 +1,5 @@
-import { mat4 } from 'gl-matrix'
 import { Object3D } from './Object3D'
+import { Matrix4 } from './Matrix4'
 
 /**
  * Constructs a camera object implementing a perspective matrix.
@@ -8,11 +8,11 @@ export class Camera extends Object3D {
   /**
    * A projection matrix. Useful for projecting transforms.
    */
-  readonly projectionMatrix = mat4.create()
+  readonly projectionMatrix = new Matrix4()
   /**
    * A camera inverse matrix. Useful for aligning transforms with the camera.
    */
-  readonly viewMatrix = mat4.create()
+  readonly viewMatrix = new Matrix4()
 
   constructor(
     /** Vertical field of view in degrees. Default is `75` */
@@ -30,10 +30,7 @@ export class Camera extends Object3D {
   updateMatrix(): void {
     super.updateMatrix()
 
-    if (this.matrixAutoUpdate) {
-      mat4.perspectiveNO(this.projectionMatrix, this.fov * (Math.PI / 180), this.aspect, this.near, this.far)
-      mat4.copy(this.viewMatrix, this.matrix)
-      mat4.invert(this.viewMatrix, this.viewMatrix)
-    }
+    if (this.matrixAutoUpdate) this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far)
+    this.viewMatrix.copy(this.matrix).invert()
   }
 }

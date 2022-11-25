@@ -1,5 +1,4 @@
-import { vec3, quat } from 'gl-matrix'
-import type { Camera } from 'four'
+import { Vector3, Camera } from '../src'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
 enum BUTTONS {
@@ -11,14 +10,14 @@ enum BUTTONS {
 const KEYBOARD_ZOOM_SPEED = 0.04
 const KEYBOARD_MOVE_SPEED = Math.PI * 4
 
-const _v = vec3.create()
+const _v = new Vector3()
 
 /**
  * Orbital controls that revolve a camera around a point.
  */
 export class OrbitControls {
   /** The center point to orbit around. Default is `0, 0, 0` */
-  readonly center = vec3.create()
+  readonly center = new Vector3()
   /** The speed factor for panning and orbiting. Default is `1` */
   public speed = 1
   /** Whether to enable scroll to zoom. Default is `true` */
@@ -49,6 +48,7 @@ export class OrbitControls {
 
   constructor(camera: Camera) {
     this._camera = camera
+    this._camera.lookAt(this.center)
 
     // Ensure methods don't descope and re-inherit `this`
     const properties = Object.getOwnPropertyNames(Object.getPrototypeOf(this))
@@ -62,49 +62,47 @@ export class OrbitControls {
    * Adjusts camera orbital zoom.
    */
   zoom(scale: number): void {
-    const radius = vec3.length(vec3.sub(this._camera.position, this._camera.position, this.center))
-    vec3.scale(
-      this._camera.position,
-      this._camera.position,
+    const radius = this._camera.position.sub(this.center).getLength()
+    this._camera.position.multiply(
       scale * (Math.min(this.maxRadius, Math.max(this.minRadius, radius * scale)) / (radius * scale)),
     )
-    vec3.add(this._camera.position, this._camera.position, this.center)
+    this._camera.position.add(this.center)
   }
 
   /**
    * Adjusts camera orbital position.
    */
   orbit(deltaX: number, deltaY: number): void {
-    const offset = vec3.sub(this._camera.position, this._camera.position, this.center)
-    const radius = vec3.length(offset)
+    const offset = this._camera.position.sub(this.center)
+    const radius = offset.getLength()
 
     const deltaPhi = deltaY * (this.speed / this._element!.clientHeight)
     const deltaTheta = deltaX * (this.speed / this._element!.clientHeight)
 
-    const phi = Math.min(this.maxPhi, Math.max(this.minPhi, Math.acos(offset[1] / radius) - deltaPhi)) || Number.EPSILON
+    const phi = Math.min(this.maxPhi, Math.max(this.minPhi, Math.acos(offset.y / radius) - deltaPhi)) || Number.EPSILON
     const theta =
-      Math.min(this.maxTheta, Math.max(this.minTheta, Math.atan2(offset[2], offset[0]) + deltaTheta)) || Number.EPSILON
+      Math.min(this.maxTheta, Math.max(this.minTheta, Math.atan2(offset.z, offset.x) + deltaTheta)) || Number.EPSILON
 
-    vec3.set(this._camera.position, Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta))
-    vec3.scale(this._camera.position, this._camera.position, radius)
+    this._camera.position
+      .set(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta))
+      .multiply(radius)
 
-    vec3.add(this._camera.position, this._camera.position, this.center)
+    this._camera.position.add(this.center)
     this._camera.lookAt(this.center)
-    quat.invert(this._camera.quaternion, this._camera.quaternion)
   }
 
   /**
    * Adjusts orthogonal camera pan.
    */
   pan(deltaX: number, deltaY: number): void {
-    vec3.sub(this._camera.position, this._camera.position, this.center)
-
-    vec3.set(_v, -deltaX, deltaY, 0)
-    vec3.transformQuat(_v, _v, this._camera.quaternion)
-    vec3.scale(_v, _v, this.speed / this._element!.clientHeight)
-
-    vec3.add(this.center, this.center, _v)
-    vec3.add(this._camera.position, this._camera.position, this.center)
+    this._camera.position.sub(this.center)
+    this.center.add(
+      _v
+        .set(-deltaX, deltaY, 0)
+        .applyQuaternion(this._camera.quaternion)
+        .multiply(this.speed / this._element!.clientHeight),
+    )
+    this._camera.position.add(this.center)
   }
 
   private _onContextMenu(event: MouseEvent): void {

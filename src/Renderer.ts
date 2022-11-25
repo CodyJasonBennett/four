@@ -1,4 +1,4 @@
-import { vec3, mat4, mat3 } from 'gl-matrix'
+import { Vector3 } from './Vector3'
 import type { Camera } from './Camera'
 import type { Attribute } from './Geometry'
 import type { BlendFactor, BlendOperation, Side, Blending, Uniform } from './Material'
@@ -72,9 +72,9 @@ export class Renderer {
   private _textures = new WeakMap<Texture, WebGLTexture>()
   private _FBOs = new WeakMap<RenderTarget, WebGLFramebuffer>()
   private _textureIndex = 0
-  private _a = vec3.create()
-  private _b = vec3.create()
-  private _c = vec3.create()
+  private _a = new Vector3()
+  private _b = new Vector3()
+  private _c = new Vector3()
 
   constructor(canvas: HTMLCanvasElement = document.createElement('canvas')) {
     this.canvas = canvas
@@ -217,12 +217,8 @@ export class Renderer {
       mesh.material.uniforms.normalMatrix = mesh.normalMatrix
       mesh.material.uniforms.modelViewMatrix = mesh.modelViewMatrix
 
-      mat4.copy(mesh.modelViewMatrix, camera.viewMatrix)
-      mat4.multiply(mesh.modelViewMatrix, mesh.modelViewMatrix, mesh.matrix)
-
-      mat4.copy(mesh.modelViewMatrix, camera.viewMatrix)
-      mat4.multiply(mesh.modelViewMatrix, mesh.modelViewMatrix, mesh.matrix)
-      mat3.normalFromMat4(mesh.normalMatrix, mesh.modelViewMatrix)
+      mesh.modelViewMatrix.copy(camera.viewMatrix).multiply(mesh.matrix)
+      mesh.normalMatrix.normal(mesh.modelViewMatrix)
     }
 
     let compiled = this._compiled.get(mesh)
@@ -315,14 +311,14 @@ export class Renderer {
       if (node instanceof Mesh) renderList.push(node)
     })
 
-    if (camera) mat4.getTranslation(this._c, camera.matrix)
+    if (camera) this._c.set(camera.matrix[12], camera.matrix[13], camera.matrix[14])
 
     return renderList.sort(
       (a, b) =>
         (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
         (!!camera &&
-          vec3.distance(mat4.getTranslation(this._b, b.matrix), this._c) -
-            vec3.distance(mat4.getTranslation(this._a, a.matrix), this._c)) ||
+          this._b.set(b.matrix[12], b.matrix[13], b.matrix[14]).distanceTo(this._c) -
+            this._a.set(a.matrix[12], a.matrix[13], a.matrix[14]).distanceTo(this._c)) ||
         (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
     )
   }

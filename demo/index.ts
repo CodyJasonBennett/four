@@ -1,4 +1,4 @@
-import { Renderer, Camera, Object3D, Geometry, Material, Mesh } from 'four'
+import { Renderer, Camera, Object3D, Geometry, Material, Mesh } from '../src'
 import { OrbitControls } from './OrbitControls'
 
 const renderer = new Renderer()
@@ -6,7 +6,7 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
 
 const camera = new Camera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position[2] = 5
+camera.position.z = 5
 
 const controls = new OrbitControls(camera)
 controls.connect(renderer.canvas)
@@ -78,15 +78,15 @@ class WireframeMaterial extends Material {
 }
 
 const pink = new Mesh(new BoxGeometry(), new WireframeMaterial([1.0, 0.3, 0.9]))
-pink.position[0] = -1
+pink.position.x = -1
 scene.add(pink)
 
 const green = new Mesh(new BoxGeometry(), new WireframeMaterial([0.2, 1.0, 0.6]))
-green.position[0] = 0
+green.position.x = 0
 scene.add(green)
 
 const blue = new Mesh(new BoxGeometry(), new WireframeMaterial([0.5, 0.8, 1.0]))
-blue.position[0] = 1
+blue.position.x = 1
 scene.add(blue)
 
 window.addEventListener('resize', () => {
