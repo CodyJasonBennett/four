@@ -2,7 +2,12 @@ import { Object3D } from './Object3D'
 import { Matrix4 } from './Matrix4'
 
 /**
- * Constructs a camera object implementing a perspective matrix.
+ * Represents a camera clipping space.
+ */
+export type CameraClippingSpace = 'webgl' | 'webgpu'
+
+/**
+ * Constructs a camera object. Can be extended to calculate projection matrices.
  */
 export class Camera extends Object3D {
   /**
@@ -13,6 +18,12 @@ export class Camera extends Object3D {
    * A view matrix. Useful for aligning transforms with the camera.
    */
   readonly viewMatrix = new Matrix4()
+  /**
+   * Controls the camera's current clipping space.
+   *
+   * WebGL creates `[-1, 1]` clipping space, and WebGPU creates `[0, 1]` clipping space.
+   */
+  public clippingSpace: CameraClippingSpace = 'webgl'
 
   constructor(
     /** Vertical field of view in degrees. Default is `75` */
@@ -29,8 +40,6 @@ export class Camera extends Object3D {
 
   updateMatrix(): void {
     super.updateMatrix()
-
-    if (this.matrixAutoUpdate) this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far)
     this.viewMatrix.copy(this.matrix).invert()
   }
 }

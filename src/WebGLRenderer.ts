@@ -51,9 +51,55 @@ export interface Compiled {
 }
 
 /**
+ * {@link WebGLRenderer} constructor parameters.
+ */
+export interface WebGLRendererOptions {
+  /**
+   * An optional canvas element to draw to.
+   */
+  canvas: HTMLCanvasElement
+  /**
+   * An optional WebGL2 context to draw with.
+   */
+  context: WebGL2RenderingContext
+  /**
+   * Whether to draw with a transparent background. Default is `true`.
+   */
+  alpha: boolean
+  /**
+   * Whether to enable anti-aliasing for sharp corners. Default is `false`.
+   */
+  antialias: boolean
+  /**
+   * Whether to create a depth buffer to depth test with. Default is `true`.
+   */
+  depth: boolean
+  /**
+   * Whether to create a stencil buffer. Useful for masking, reflections, and per-pixel optimizations. Default is `false`.
+   */
+  stencil: boolean
+  /**
+   * Whether to bail if on a low-end system or if no dedicated GPU is available. Default is `false`.
+   */
+  failIfMajorPerformanceCaveat: boolean
+  /**
+   * Whether to fade out colors with transparency. Default is `true`.
+   */
+  premultipliedAlpha: boolean
+  /**
+   * Whether to copy the drawing buffer to screen instead of swapping at the expense of performance. Default is `false`.
+   */
+  preserveDrawingBuffer: boolean
+  /**
+   * Whether to prioritize rendering performance or power efficiency. Defaults to `default` to automatically balance.
+   */
+  powerPreference: 'default' | 'high-performance' | 'low-power'
+}
+
+/**
  * Constructs a renderer object. Can be extended to draw to a canvas.
  */
-export class Renderer {
+export class WebGLRenderer {
   /**
    * Output {@link HTMLCanvasElement} to draw to.
    */
@@ -76,16 +122,19 @@ export class Renderer {
   private _b = new Vector3()
   private _c = new Vector3()
 
-  constructor(canvas: HTMLCanvasElement = document.createElement('canvas')) {
-    this.canvas = canvas
-    this.gl = canvas.getContext('webgl2', {
-      alpha: true,
-      antialias: true,
-      depth: true,
-      stencil: true,
-      premultipliedAlpha: true,
-      powerPreference: 'high-performance',
-    })!
+  constructor({ canvas, context, ...rest }: Partial<WebGLRendererOptions> = {}) {
+    this.canvas = canvas ?? document.createElement('canvas')
+    this.gl =
+      context ??
+      this.canvas.getContext('webgl2', {
+        alpha: true,
+        antialias: true,
+        depth: true,
+        stencil: true,
+        premultipliedAlpha: true,
+        powerPreference: 'high-performance',
+        ...rest,
+      })!
   }
 
   /**

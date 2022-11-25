@@ -209,8 +209,10 @@ export class Matrix4 extends Array {
 
   /**
    * Calculates a perspective projection matrix.
+   *
+   * Accepts a `normalized` argument, when `true` creates an WebGL `[-1, 1]` clipping space, and when `false` creates a WebGPU `[0, 1]` clipping space.
    */
-  perspective(fov: number, aspect: number, near: number, far: number): this {
+  perspective(fov: number, aspect: number, near: number, far: number, normalized: boolean): this {
     const fovRad = fov * (Math.PI / 180)
     const f = 1 / Math.tan(fovRad / 2)
     const depth = 1 / (near - far)
@@ -225,20 +227,36 @@ export class Matrix4 extends Array {
     this[7] = 0
     this[8] = 0
     this[9] = 0
-    this[10] = (far + near) * depth
     this[11] = -1
     this[12] = 0
     this[13] = 0
-    this[14] = 2 * far * near * depth
     this[15] = 0
+
+    if (normalized) {
+      this[10] = (far + near) * depth
+      this[14] = 2 * far * near * depth
+    } else {
+      this[10] = far * depth
+      this[14] = far * near * depth
+    }
 
     return this
   }
 
   /**
    * Calculates an orthographic projection matrix.
+   *
+   * Accepts a `normalized` argument, when `true` creates an WebGL `[-1, 1]` clipping space, and when `false` creates a WebGPU `[0, 1]` clipping space.
    */
-  orthogonal(left: number, right: number, bottom: number, top: number, near: number, far: number): this {
+  orthogonal(
+    left: number,
+    right: number,
+    bottom: number,
+    top: number,
+    near: number,
+    far: number,
+    normalized: boolean,
+  ): this {
     const horizontal = 1 / (left - right)
     const vertical = 1 / (bottom - top)
     const depth = 1 / (near - far)
@@ -253,12 +271,18 @@ export class Matrix4 extends Array {
     this[7] = 0
     this[8] = 0
     this[9] = 0
-    this[10] = 2 * depth
     this[11] = 0
     this[12] = (left + right) * horizontal
     this[13] = (top + bottom) * vertical
-    this[14] = (far + near) * depth
     this[15] = 1
+
+    if (normalized) {
+      this[10] = 2 * depth
+      this[14] = (far + near) * depth
+    } else {
+      this[10] = depth
+      this[14] = near * depth
+    }
 
     return this
   }

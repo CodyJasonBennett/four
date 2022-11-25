@@ -66,7 +66,7 @@ export interface Blending {
 }
 
 /**
- * Material constructor parameters. Accepts shaders, their uniforms, and various blending & culling options.
+ * {@link Material} constructor parameters. Accepts shaders, their uniforms, and various blending & culling options.
  */
 export interface MaterialOptions {
   /**

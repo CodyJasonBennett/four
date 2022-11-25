@@ -1,11 +1,11 @@
-import { Renderer, Camera, Object3D, Geometry, Material, Mesh } from '../src'
+import { WebGLRenderer, PerspectiveCamera, Object3D, Geometry, Material, Mesh } from '../src'
 import { OrbitControls } from './OrbitControls'
 
-const renderer = new Renderer()
+const renderer = new WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
 
-const camera = new Camera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
 camera.position.z = 5
 
 const controls = new OrbitControls(camera)
