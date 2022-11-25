@@ -1,4 +1,5 @@
 import { Vector3 } from './Vector3'
+import { hypot, acos, sin, sqrt, EPSILON, ARRAY_TYPE } from './_constants'
 
 /**
  * Represents the components of a {@link Quaternion}.
@@ -8,7 +9,7 @@ export type QuaternionTuple = [x: number, y: number, z: number, w: number]
 /**
  * Calculates a quaternion with a defined rotation axis (x, y, z) and magnitude (w).
  */
-export class Quaternion extends Array {
+export class Quaternion extends ARRAY_TYPE {
   private _a = new Vector3()
   private _b = new Vector3()
   private _c = new Vector3()
@@ -143,7 +144,7 @@ export class Quaternion extends Array {
    * Returns the Euclidean length of this quaternion.
    */
   getLength(): number {
-    return Math.hypot(this.x, this.y, this.z, this.w)
+    return hypot(this.x, this.y, this.z, this.w)
   }
 
   /**
@@ -164,10 +165,10 @@ export class Quaternion extends Array {
    * Applies this quaternion's rotation axis and angle to `axis`.
    */
   getAxisAngle(axis: Vector3): Vector3 {
-    const rad = Math.acos(this.w) * 2
-    const s = Math.sin(rad / 2)
+    const rad = acos(this.w) * 2
+    const s = sin(rad / 2)
 
-    if (s > Number.EPSILON) {
+    if (s > EPSILON) {
       return axis.set(this.x / s, this.y / s, this.z / s)
     } else {
       return axis.set(1, 0, 0)
@@ -184,11 +185,11 @@ export class Quaternion extends Array {
     let scale0 = 1 - t
     let scale1 = t
 
-    if (1 - cosom > Number.EPSILON) {
-      const omega = Math.acos(cosom)
-      const sinom = Math.sin(omega)
-      scale0 = Math.sin((1 - t) * omega) / sinom
-      scale1 = Math.sin(t * omega) / sinom
+    if (1 - cosom > EPSILON) {
+      const omega = acos(cosom)
+      const sinom = sin(omega)
+      scale0 = sin((1 - t) * omega) / sinom
+      scale1 = sin(t * omega) / sinom
     }
 
     if (cosom < 0) scale1 *= -1
@@ -219,13 +220,9 @@ export class Quaternion extends Array {
     if (x.getLength() ** 2 === 0) {
       const pup = this._c.copy(up)
 
-      if (pup.z) {
-        pup.x += 1e-6
-      } else if (pup.y) {
-        pup.z += 1e-6
-      } else {
-        pup.y += 1e-6
-      }
+      if (pup.z) pup.x += EPSILON
+      else if (pup.y) pup.z += EPSILON
+      else pup.y += EPSILON
 
       x.cross(pup)
     }
@@ -246,16 +243,16 @@ export class Quaternion extends Array {
     const trace = sm11 + sm22 + sm33
 
     if (trace > 0) {
-      const S = Math.sqrt(trace + 1.0) * 2
+      const S = sqrt(trace + 1.0) * 2
       return this.set((sm23 - sm32) / S, (sm31 - sm13) / S, (sm12 - sm21) / S, 0.25 * S)
     } else if (sm11 > sm22 && sm11 > sm33) {
-      const S = Math.sqrt(1.0 + sm11 - sm22 - sm33) * 2
+      const S = sqrt(1.0 + sm11 - sm22 - sm33) * 2
       return this.set(0.25 * S, (sm12 + sm21) / S, (sm31 + sm13) / S, (sm23 - sm32) / S)
     } else if (sm22 > sm33) {
-      const S = Math.sqrt(1.0 + sm22 - sm11 - sm33) * 2
+      const S = sqrt(1.0 + sm22 - sm11 - sm33) * 2
       return this.set((sm12 + sm21) / S, 0.25 * S, (sm23 + sm32) / S, (sm31 - sm13) / S)
     } else {
-      const S = Math.sqrt(1.0 + sm33 - sm11 - sm22) * 2
+      const S = sqrt(1.0 + sm33 - sm11 - sm22) * 2
       return this.set((sm31 + sm13) / S, (sm23 + sm32) / S, 0.25 * S, (sm12 - sm21) / S)
     }
   }

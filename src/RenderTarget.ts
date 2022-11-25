@@ -1,4 +1,5 @@
 import { Texture } from './Texture'
+import { ARRAY_TYPE } from './_constants'
 
 /**
  * Constructs a render target to draw into.
@@ -7,7 +8,7 @@ export class RenderTarget {
   /**
    * A {@link Texture} array to write color attachments to.
    */
-  readonly textures: Texture[]
+  readonly textures: Texture[] = []
   /**
    * Used internally to flag for update on resize. Default is `true`.
    */
@@ -27,7 +28,7 @@ export class RenderTarget {
      */
     readonly count: number = 1,
   ) {
-    this.textures = Array.from({ length: count }, () => new Texture())
+    this.textures = ARRAY_TYPE.from({ length: count }, () => new Texture())
   }
 
   /**

@@ -1,5 +1,6 @@
 import type { Quaternion } from './Quaternion'
 import type { Matrix4 } from './Matrix4'
+import { ARRAY_TYPE, hypot, sqrt } from './_constants'
 
 /**
  * Represents the components of a {@link Vector3}.
@@ -9,7 +10,7 @@ export type Vector3Tuple = [x: number, y: number, z: number]
 /**
  * Calculates a three-dimensional (x, y, z) vector.
  */
-export class Vector3 extends Array {
+export class Vector3 extends ARRAY_TYPE {
   constructor(x = 0, y = 0, z = 0) {
     super(3)
     this.set(x, y, z)
@@ -112,7 +113,7 @@ export class Vector3 extends Array {
    * Calculates the Euclidean length of this vector.
    */
   getLength(): number {
-    return Math.hypot(this.x, this.y, this.z)
+    return hypot(this.x, this.y, this.z)
   }
 
   /**
@@ -129,7 +130,7 @@ export class Vector3 extends Array {
     const x = this.x - v.x
     const y = this.x - v.y
     const z = this.x - v.z
-    return Math.sqrt(x * x + y * y + z * z)
+    return sqrt(x * x + y * y + z * z)
   }
 
   /**

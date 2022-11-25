@@ -1,5 +1,6 @@
 import type { Vector3 } from './Vector3'
 import type { Quaternion } from './Quaternion'
+import { ARRAY_TYPE, PI, tan } from './_constants'
 
 /**
  * Represents the components of a {@link Matrix4}.
@@ -26,7 +27,7 @@ export type Matrix4Tuple = [
 /**
  * Calculates a 4x4 matrix.
  */
-export class Matrix4 extends Array {
+export class Matrix4 extends ARRAY_TYPE {
   constructor(
     m00 = 1,
     m01 = 0,
@@ -197,8 +198,8 @@ export class Matrix4 extends Array {
    * Accepts a `normalized` argument, when `true` creates an WebGL `[-1, 1]` clipping space, and when `false` creates a WebGPU `[0, 1]` clipping space.
    */
   perspective(fov: number, aspect: number, near: number, far: number, normalized: boolean): this {
-    const fovRad = fov * (Math.PI / 180)
-    const f = 1 / Math.tan(fovRad / 2)
+    const fovRad = fov * (PI / 180)
+    const f = 1 / tan(fovRad / 2)
     const depth = 1 / (near - far)
 
     this[0] = f / aspect

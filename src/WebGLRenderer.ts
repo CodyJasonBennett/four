@@ -6,35 +6,74 @@ import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
 import { Texture } from './Texture'
+import { min, max, floor } from './_constants'
+
+const GL_FRAMEBUFFER = 0x8d40
+const GL_COLOR_ATTACHMENT0 = 0x8ce0
+const GL_TEXTURE_2D = 0x0de1
+const GL_TEXTURE_MIN_FILTER = 0x2801
+const GL_NEAREST = 0x2600
+const GL_RGBA = 0x1908
+const GL_UNSIGNED_BYTE = 0x1401
+const GL_DEPTH_TEST = 0x0b71
+const GL_CULL_FACE = 0x0b44
+const GL_BLEND = 0x0be2
+const GL_UNPACK_ALIGNMENT = 0x0cf5
+const GL_VERTEX_SHADER = 0x8b31
+const GL_FRAGMENT_SHADER = 0x8b30
+const GL_ELEMENT_ARRAY_BUFFER = 0x8893
+const GL_ARRAY_BUFFER = 0x8892
+const GL_STATIC_DRAW = 0x88e4
+const GL_FLOAT = 0x1406
+const GL_DYNAMIC_DRAW = 0x88e8
+const GL_COLOR_BUFFER_BIT = 0x00004000
+const GL_DEPTH_BUFFER_BIT = 0x00000100
+const GL_STENCIL_BUFFER_BIT = 0x00000400
+const GL_UNSIGNED_INT = 0x1405
+
+const GL_ZERO = 0
+const GL_ONE = 1
+const GL_SRC_COLOR = 0x0300
+const GL_ONE_MINUS_SRC_COLOR = 0x0301
+const GL_SRC_ALPHA = 0x0302
+const GL_ONE_MINUS_SRC_ALPHA = 0x0303
+const GL_DST_COLOR = 0x0306
+const GL_DST_ALPHA = 0x0304
+const GL_ONE_MINUS_DST_ALPHA = 0x0305
+const GL_ONE_MINUS_DST_COLOR = 0x0307
+const GL_SRC_ALPHA_SATURATE = 0x0308
+const GL_CONSTANT_COLOR = 0x8001
+const GL_ONE_MINUS_CONSTANT_COLOR = 0x8002
 
 const GL_BLEND_FACTORS: Record<BlendFactor, number> = {
-  zero: 0,
-  one: 1,
-  src: 768,
-  'one-minus-src': 769,
-  'src-alpha': 770,
-  'one-minus-src-alpha': 771,
-  dst: 774,
-  'one-minus-dst': 775,
-  'dst-alpha': 772,
-  'one-minus-dst-alpha': 773,
-  'src-alpha-saturated': 776,
-  constant: 32769,
-  'one-minus-constant': 32770,
+  zero: GL_ZERO,
+  one: GL_ONE,
+  src: GL_SRC_COLOR,
+  'one-minus-src': GL_ONE_MINUS_SRC_COLOR,
+  'src-alpha': GL_SRC_ALPHA,
+  'one-minus-src-alpha': GL_ONE_MINUS_SRC_ALPHA,
+  'dst-alpha': GL_DST_ALPHA,
+  'one-minus-dst-alpha': GL_ONE_MINUS_DST_ALPHA,
+  dst: GL_DST_COLOR,
+  'one-minus-dst': GL_ONE_MINUS_DST_COLOR,
+  'src-alpha-saturated': GL_SRC_ALPHA_SATURATE,
+  constant: GL_CONSTANT_COLOR,
+  'one-minus-constant': GL_ONE_MINUS_CONSTANT_COLOR,
 } as const
+
+const GL_FUNC_ADD = 0x8006
+const GL_FUNC_SUBSTRACT = 0x800a
+const GL_FUNC_REVERSE_SUBTRACT = 0x800b
+const GL_MIN = 0x8007
+const GL_MAX = 0x8008
 
 const GL_BLEND_OPERATIONS: Record<BlendOperation, number> = {
-  add: 32774,
-  subtract: 32778,
-  'reverse-subtract': 32779,
-  min: 32775,
-  max: 32776,
+  add: GL_FUNC_ADD,
+  subtract: GL_FUNC_SUBSTRACT,
+  'reverse-subtract': GL_FUNC_REVERSE_SUBTRACT,
+  min: GL_MIN,
+  max: GL_MAX,
 } as const
-
-/**
- * Adds line numbers to a string with an optional starting offset.
- */
-const lineNumbers = (source: string, offset = 0): string => source.replace(/^/gm, () => `${offset++}:`)
 
 /**
  * Represents WebGL compiled {@link Mesh} state.
@@ -152,7 +191,7 @@ export class WebGLRenderer {
    */
   setRenderTarget(renderTarget: RenderTarget | null): void {
     if (!renderTarget) {
-      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+      this.gl.bindFramebuffer(GL_FRAMEBUFFER, null)
       return this.gl.viewport(0, 0, this.canvas.width, this.canvas.height)
     }
 
@@ -160,36 +199,36 @@ export class WebGLRenderer {
     if (!FBO || renderTarget.needsUpdate) {
       if (FBO) this.gl.deleteFramebuffer(FBO)
       FBO = this.gl.createFramebuffer()!
-      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
+      this.gl.bindFramebuffer(GL_FRAMEBUFFER, FBO)
 
       const attachments: number[] = []
 
-      let attachment = this.gl.COLOR_ATTACHMENT0
+      let attachment = GL_COLOR_ATTACHMENT0
       for (const texture of renderTarget.textures) {
         attachments.push(attachment)
 
         let target = this._textures.get(texture)
         if (!target) {
           target = this.gl.createTexture()!
-          this.gl.bindTexture(this.gl.TEXTURE_2D, target)
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST)
+          this.gl.bindTexture(GL_TEXTURE_2D, target)
+          this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
           this._textures.set(texture, target)
           texture.needsUpdate = false
         }
-        this.gl.bindTexture(this.gl.TEXTURE_2D, target)
+        this.gl.bindTexture(GL_TEXTURE_2D, target)
         this.gl.texImage2D(
-          this.gl.TEXTURE_2D,
+          GL_TEXTURE_2D,
           0,
-          this.gl.RGBA,
+          GL_RGBA,
           renderTarget.width,
           renderTarget.height,
           0,
-          this.gl.RGBA,
-          this.gl.UNSIGNED_BYTE,
+          GL_RGBA,
+          GL_UNSIGNED_BYTE,
           null,
         )
 
-        this.gl.framebufferTexture2D(this.gl.DRAW_FRAMEBUFFER, attachment, this.gl.TEXTURE_2D, target, 0)
+        this.gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, target, 0)
         attachment++
       }
       this.gl.drawBuffers(attachments)
@@ -198,7 +237,7 @@ export class WebGLRenderer {
       this._FBOs.set(renderTarget, FBO)
     }
 
-    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, FBO)
+    this.gl.bindFramebuffer(GL_FRAMEBUFFER, FBO)
     this.gl.viewport(0, 0, renderTarget.width, renderTarget.height)
   }
 
@@ -207,10 +246,10 @@ export class WebGLRenderer {
    */
   setDepthTest(enabled: boolean, depthFunc = this.gl.LESS): void {
     if (enabled) {
-      this.gl.enable(this.gl.DEPTH_TEST)
+      this.gl.enable(GL_DEPTH_TEST)
       this.gl.depthFunc(depthFunc)
     } else {
-      this.gl.disable(this.gl.DEPTH_TEST)
+      this.gl.disable(GL_DEPTH_TEST)
     }
   }
 
@@ -226,10 +265,10 @@ export class WebGLRenderer {
    */
   setCullSide(side: Side = 'both'): void {
     if (side === 'both') {
-      this.gl.disable(this.gl.CULL_FACE)
-      this.gl.disable(this.gl.DEPTH_TEST)
+      this.gl.disable(GL_CULL_FACE)
+      this.gl.disable(GL_DEPTH_TEST)
     } else {
-      this.gl.enable(this.gl.CULL_FACE)
+      this.gl.enable(GL_CULL_FACE)
       this.gl.cullFace(side === 'front' ? this.gl.BACK : this.gl.FRONT)
     }
   }
@@ -239,7 +278,7 @@ export class WebGLRenderer {
    */
   setBlending(blending?: Blending): void {
     if (blending) {
-      this.gl.enable(this.gl.BLEND)
+      this.gl.enable(GL_BLEND)
       this.gl.blendFuncSeparate(
         GL_BLEND_FACTORS[blending.color.srcFactor!],
         GL_BLEND_FACTORS[blending.color.dstFactor!],
@@ -251,7 +290,7 @@ export class WebGLRenderer {
         GL_BLEND_OPERATIONS[blending.alpha.operation!],
       )
     } else {
-      this.gl.disable(this.gl.BLEND)
+      this.gl.disable(GL_BLEND)
     }
   }
 
@@ -266,17 +305,17 @@ export class WebGLRenderer {
       let texture = this._textures.get(value)!
       if (!texture) {
         texture = this.gl.createTexture()!
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture)
-        this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, 1)
-        this.gl.generateMipmap(this.gl.TEXTURE_2D)
+        this.gl.bindTexture(GL_TEXTURE_2D, texture)
+        this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        this.gl.generateMipmap(GL_TEXTURE_2D)
         this._textures.set(value, texture)
       }
 
       const index = this._textureIndex++
       this.gl.activeTexture(this.gl.TEXTURE0 + index)
-      this.gl.bindTexture(this.gl.TEXTURE_2D, texture)
+      this.gl.bindTexture(GL_TEXTURE_2D, texture)
       if (value.needsUpdate) {
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, value.image!)
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, value.image!)
         value.needsUpdate = false
       }
       return this.gl.uniform1i(location, index)
@@ -320,12 +359,12 @@ export class WebGLRenderer {
       program = this.gl.createProgram()!
       this._programs.set(mesh.material, program)
 
-      const vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER)!
+      const vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
       this.gl.shaderSource(vertexShader, mesh.material.vertex)
       this.gl.compileShader(vertexShader)
       this.gl.attachShader(program, vertexShader)
 
-      const fragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!
+      const fragmentShader = this.gl.createShader(GL_FRAGMENT_SHADER)!
       this.gl.shaderSource(fragmentShader, mesh.material.fragment)
       this.gl.compileShader(fragmentShader)
       this.gl.attachShader(program, fragmentShader)
@@ -334,11 +373,11 @@ export class WebGLRenderer {
 
       for (const shader of [vertexShader, fragmentShader]) {
         const error = this.gl.getShaderInfoLog(shader)
-        if (error) throw `Error compiling shader: ${error}\n${lineNumbers(this.gl.getShaderSource(shader)!)}`
+        if (error) throw `${error}\n${this.gl.getShaderSource(shader)!}`
       }
 
       const error = this.gl.getProgramInfoLog(program)
-      if (error) throw `Error compiling program: ${this.gl.getProgramInfoLog(program)}`
+      if (error) throw `${this.gl.getProgramInfoLog(program)}`
 
       this.gl.deleteShader(vertexShader)
       this.gl.deleteShader(fragmentShader)
@@ -355,27 +394,27 @@ export class WebGLRenderer {
 
     for (const key in mesh.geometry.attributes) {
       const attribute = mesh.geometry.attributes[key]
-      const type = key === 'index' ? this.gl.ELEMENT_ARRAY_BUFFER : this.gl.ARRAY_BUFFER
+      const type = key === 'index' ? GL_ELEMENT_ARRAY_BUFFER : GL_ARRAY_BUFFER
 
       let buffer = this._buffers.get(attribute)
       if (!buffer) {
         buffer = this.gl.createBuffer()!
         this._buffers.set(attribute, buffer)
         this.gl.bindBuffer(type, buffer)
-        this.gl.bufferData(type, attribute.data, this.gl.STATIC_DRAW)
+        this.gl.bufferData(type, attribute.data, GL_STATIC_DRAW)
       }
 
       if (!buffer || program !== compiled?.program || VAO !== compiled?.VAO) {
         const location = this.gl.getAttribLocation(program, key)
         if (location !== -1) {
-          const slots = Math.min(4, Math.max(1, Math.floor(attribute.size / 3)))
+          const slots = min(4, max(1, floor(attribute.size / 3)))
 
           for (let i = 0; i < slots; i++) {
             this.gl.enableVertexAttribArray(location + i)
             this.gl.vertexAttribPointer(
               location + i,
               attribute.size / slots,
-              this.gl.FLOAT,
+              GL_FLOAT,
               false,
               attribute.data.BYTES_PER_ELEMENT * attribute.size,
               attribute.size * i,
@@ -388,7 +427,7 @@ export class WebGLRenderer {
       }
 
       if (attribute.needsUpdate) {
-        this.gl.bufferData(type, attribute.data, this.gl.DYNAMIC_DRAW)
+        this.gl.bufferData(type, attribute.data, GL_DYNAMIC_DRAW)
         attribute.needsUpdate = false
       }
     }
@@ -407,7 +446,7 @@ export class WebGLRenderer {
   /**
    * Clears color and depth buffers.
    */
-  clear(bits = this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT): void {
+  clear(bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT): void {
     this.gl.clear(bits)
   }
 
@@ -454,8 +493,7 @@ export class WebGLRenderer {
 
       const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
       const { index, position } = node.geometry.attributes
-      if (index)
-        this.gl.drawElementsInstanced(mode, index.data.length / index.size, this.gl.UNSIGNED_INT, 0, node.instances)
+      if (index) this.gl.drawElementsInstanced(mode, index.data.length / index.size, GL_UNSIGNED_INT, 0, node.instances)
       else this.gl.drawArraysInstanced(mode, 0, position.data.length / position.size, node.instances)
     }
   }
