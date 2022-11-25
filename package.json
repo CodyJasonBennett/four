@@ -36,7 +36,10 @@
   },
   "scripts": {
     "dev": "vite demo",
-    "build": "microbundle --raw -f modern,cjs",
+    "build": "microbundle --raw -f esm,cjs",
     "lint": "tsc"
-  }
+  },
+  "browserslist": [
+    "node 16"
+  ]
 }
