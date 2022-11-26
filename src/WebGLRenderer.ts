@@ -408,6 +408,7 @@ export class WebGLRenderer {
           this._buffers.set(attribute, buffer)
           this.gl.bindBuffer(type, buffer)
           this.gl.bufferData(type, attribute.data, GL_STATIC_DRAW)
+          attribute.needsUpdate = false
         }
 
         const location = this.gl.getAttribLocation(program, key)
@@ -427,8 +428,6 @@ export class WebGLRenderer {
             if (attribute.divisor) this.gl.vertexAttribDivisor(location + i, attribute.divisor)
           }
         }
-
-        attribute.needsUpdate = false
       }
 
       if (attribute.needsUpdate) {
