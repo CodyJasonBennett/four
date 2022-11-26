@@ -401,14 +401,15 @@ export class WebGLRenderer {
       const type = key === 'index' ? GL_ELEMENT_ARRAY_BUFFER : GL_ARRAY_BUFFER
 
       let buffer = this._buffers.get(attribute)
-      if (!buffer) {
-        buffer = this.gl.createBuffer()!
-        this._buffers.set(attribute, buffer)
-        this.gl.bindBuffer(type, buffer)
-        this.gl.bufferData(type, attribute.data, GL_STATIC_DRAW)
-      }
 
       if (!buffer || program !== compiled?.program || VAO !== compiled?.VAO) {
+        if (!buffer) {
+          buffer = this.gl.createBuffer()!
+          this._buffers.set(attribute, buffer)
+          this.gl.bindBuffer(type, buffer)
+          this.gl.bufferData(type, attribute.data, GL_STATIC_DRAW)
+        }
+
         const location = this.gl.getAttribLocation(program, key)
         if (location !== -1) {
           const slots = min(4, max(1, floor(attribute.size / 3)))
@@ -431,6 +432,7 @@ export class WebGLRenderer {
       }
 
       if (attribute.needsUpdate) {
+        this.gl.bindBuffer(type, buffer)
         this.gl.bufferData(type, attribute.data, GL_DYNAMIC_DRAW)
         attribute.needsUpdate = false
       }
