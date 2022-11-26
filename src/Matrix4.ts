@@ -1,6 +1,6 @@
 import type { Vector3 } from './Vector3'
 import type { Quaternion } from './Quaternion'
-import { ARRAY_TYPE, PI, tan } from './_constants'
+import { ARRAY_TYPE, PI, tan } from './_shared'
 
 /**
  * Represents the components of a {@link Matrix4}.
@@ -194,10 +194,8 @@ export class Matrix4 extends ARRAY_TYPE {
 
   /**
    * Calculates a perspective projection matrix.
-   *
-   * Accepts a `normalized` argument, when `true` creates an WebGL `[-1, 1]` clipping space, and when `false` creates a WebGPU `[0, 1]` clipping space.
    */
-  perspective(fov: number, aspect: number, near: number, far: number, normalized: boolean): this {
+  perspective(fov: number, aspect: number, near: number, far: number): this {
     const fovRad = fov * (PI / 180)
     const f = 1 / tan(fovRad / 2)
     const depth = 1 / (near - far)
@@ -212,36 +210,20 @@ export class Matrix4 extends ARRAY_TYPE {
     this[7] = 0
     this[8] = 0
     this[9] = 0
+    this[10] = (far + near) * depth
     this[11] = -1
     this[12] = 0
     this[13] = 0
+    this[14] = 2 * far * near * depth
     this[15] = 0
-
-    if (normalized) {
-      this[10] = (far + near) * depth
-      this[14] = 2 * far * near * depth
-    } else {
-      this[10] = far * depth
-      this[14] = far * near * depth
-    }
 
     return this
   }
 
   /**
    * Calculates an orthographic projection matrix.
-   *
-   * Accepts a `normalized` argument, when `true` creates an WebGL `[-1, 1]` clipping space, and when `false` creates a WebGPU `[0, 1]` clipping space.
    */
-  orthogonal(
-    left: number,
-    right: number,
-    bottom: number,
-    top: number,
-    near: number,
-    far: number,
-    normalized: boolean,
-  ): this {
+  orthogonal(left: number, right: number, bottom: number, top: number, near: number, far: number): this {
     const horizontal = 1 / (left - right)
     const vertical = 1 / (bottom - top)
     const depth = 1 / (near - far)
@@ -256,18 +238,12 @@ export class Matrix4 extends ARRAY_TYPE {
     this[7] = 0
     this[8] = 0
     this[9] = 0
+    this[10] = 2 * depth
     this[11] = 0
     this[12] = (left + right) * horizontal
     this[13] = (top + bottom) * vertical
+    this[14] = (far + near) * depth
     this[15] = 1
-
-    if (normalized) {
-      this[10] = 2 * depth
-      this[14] = (far + near) * depth
-    } else {
-      this[10] = depth
-      this[14] = near * depth
-    }
 
     return this
   }
@@ -347,5 +323,17 @@ export class Matrix4 extends ARRAY_TYPE {
       0,
       1,
     ).multiply(invDet)
+  }
+
+  /**
+   * Converts a WebGL NDC space `[-1, 1]` to a WebGPU `[0, 1]` NDC space.
+   */
+  normalNDC(): this {
+    this[8] = (this[8] + this[12]) / 2
+    this[9] = (this[9] + this[13]) / 2
+    this[10] = (this[10] + this[14]) / 2
+    this[11] = (this[11] + this[15]) / 2
+
+    return this
   }
 }

@@ -1,12 +1,12 @@
 import { Vector3 } from './Vector3'
 import type { Camera } from './Camera'
-import { Attribute, Geometry } from './Geometry'
-import { BlendFactor, BlendOperation, Side, Blending, Uniform, Material } from './Material'
+import type { Attribute, Geometry } from './Geometry'
+import type { BlendFactor, BlendOperation, Side, Blending, Uniform, Material } from './Material'
 import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
 import { Texture } from './Texture'
-import { min, max, floor } from './_constants'
+import { min, max, floor } from './_shared'
 
 const GL_FRAMEBUFFER = 0x8d40
 const GL_COLOR_ATTACHMENT0 = 0x8ce0

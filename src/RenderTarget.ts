@@ -1,5 +1,5 @@
 import { Texture } from './Texture'
-import { ARRAY_TYPE } from './_constants'
+import { ARRAY_TYPE } from './_shared'
 
 /**
  * Constructs a render target to draw into.

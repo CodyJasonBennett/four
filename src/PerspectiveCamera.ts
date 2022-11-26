@@ -20,9 +20,6 @@ export class PerspectiveCamera extends Camera {
   updateMatrix(): void {
     super.updateMatrix()
 
-    if (this.matrixAutoUpdate) {
-      const normalized = this.clippingSpace === 'webgl'
-      this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far, normalized)
-    }
+    if (this.matrixAutoUpdate) this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far)
   }
 }

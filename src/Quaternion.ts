@@ -1,5 +1,5 @@
 import { Vector3 } from './Vector3'
-import { hypot, acos, sin, sqrt, EPSILON, ARRAY_TYPE } from './_constants'
+import { hypot, acos, sin, sqrt, EPSILON, ARRAY_TYPE } from './_shared'
 
 /**
  * Represents the components of a {@link Quaternion}.
