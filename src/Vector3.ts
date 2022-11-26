@@ -113,7 +113,7 @@ export class Vector3 extends ARRAY_TYPE<number> {
    * Calculates the Euclidean length of this vector.
    */
   getLength(): number {
-    return hypot(this.x, this.y, this.z)
+    return hypot(...this)
   }
 
   /**

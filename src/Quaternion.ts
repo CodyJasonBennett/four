@@ -144,7 +144,7 @@ export class Quaternion extends ARRAY_TYPE<number> {
    * Returns the Euclidean length of this quaternion.
    */
   getLength(): number {
-    return hypot(this.x, this.y, this.z, this.w)
+    return hypot(...this)
   }
 
   /**
