@@ -47,6 +47,10 @@ export class Object3D {
    * Whether object should be rendered. Default is `true`.
    */
   public visible = true
+  /**
+   * Whether to cull from rendering when out of view of a camera, if able. Default is `true`.
+   */
+  public frustumCulled = true
 
   /**
    * Rotates to face a point in world space.

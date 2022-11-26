@@ -162,9 +162,7 @@ export class WebGLRenderer {
   protected _textures = new WeakMap<Texture, WebGLTexture>()
   protected _FBOs = new WeakMap<RenderTarget, WebGLFramebuffer>()
   protected _textureIndex = 0
-  protected _a = new Vector3()
-  protected _b = new Vector3()
-  protected _c = new Vector3()
+  protected _v = new Vector3()
 
   constructor({ canvas, context, ...rest }: Partial<WebGLRendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
@@ -172,11 +170,8 @@ export class WebGLRenderer {
       context ??
       this.canvas.getContext('webgl2', {
         alpha: true,
-        antialias: true,
         depth: true,
-        stencil: true,
         premultipliedAlpha: true,
-        powerPreference: 'high-performance',
         ...rest,
       })!
   }
@@ -456,26 +451,45 @@ export class WebGLRenderer {
   }
 
   /**
-   * Returns a list of visible meshes. Will depth-sort with a camera if available.
+   * Returns a list of visible meshes. Will frustum cull and depth-sort with a camera if available.
    */
   sort(scene: Object3D, camera?: Camera): Mesh[] {
-    const renderList: Mesh[] = []
+    const sorted: Mesh[] = []
+    const unsorted: Mesh[] = []
 
     scene.traverse((node) => {
+      // Skip invisible nodes
       if (!node.visible) return true
-      if (node instanceof Mesh) renderList.push(node)
+
+      // Filter to meshes
+      const mesh = node as Mesh
+      if (!(mesh instanceof Mesh)) return
+
+      // Skip culling/sorting without camera
+      if (!camera) return void unsorted.push(mesh)
+
+      // Frustum cull if able
+      if (mesh.frustumCulled) {
+        const inFrustum = camera.frustumContains(mesh)
+        if (!inFrustum) return true
+      }
+
+      // Filter sortable objects
+      if (!mesh.material.depthTest) unsorted.push(mesh)
+      else sorted.push(mesh)
     })
 
-    if (camera) this._c.set(camera.matrix[12], camera.matrix[13], camera.matrix[14])
+    // Don't depth sort without camera
+    if (!camera) return unsorted
 
-    return renderList.sort(
-      (a, b) =>
-        (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
-        (!!camera &&
-          this._b.set(b.matrix[12], b.matrix[13], b.matrix[14]).distanceTo(this._c) -
-            this._a.set(a.matrix[12], a.matrix[13], a.matrix[14]).distanceTo(this._c)) ||
-        (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
-    )
+    // Depth sort if able
+    return sorted
+      .sort(
+        (a, b) =>
+          this._v.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
+          this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z,
+      )
+      .concat(unsorted)
   }
 
   /**
