@@ -30,6 +30,10 @@ const GL_COLOR_BUFFER_BIT = 0x00004000
 const GL_DEPTH_BUFFER_BIT = 0x00000100
 const GL_STENCIL_BUFFER_BIT = 0x00000400
 const GL_UNSIGNED_INT = 0x1405
+const GL_LESS = 0x0201
+const GL_FRONT = 0x0404
+const GL_BACK = 0x0405
+const GL_TEXTURE0 = 0x84c0
 
 const GL_ZERO = 0
 const GL_ONE = 1
@@ -244,7 +248,7 @@ export class WebGLRenderer {
   /**
    * Enables depth test. Useful for toggling testing against the depth buffer.
    */
-  setDepthTest(enabled: boolean, depthFunc = this.gl.LESS): void {
+  setDepthTest(enabled: boolean, depthFunc = GL_LESS): void {
     if (enabled) {
       this.gl.enable(GL_DEPTH_TEST)
       this.gl.depthFunc(depthFunc)
@@ -269,7 +273,7 @@ export class WebGLRenderer {
       this.gl.disable(GL_DEPTH_TEST)
     } else {
       this.gl.enable(GL_CULL_FACE)
-      this.gl.cullFace(side === 'front' ? this.gl.BACK : this.gl.FRONT)
+      this.gl.cullFace(side === 'front' ? GL_BACK : GL_FRONT)
     }
   }
 
@@ -312,7 +316,7 @@ export class WebGLRenderer {
       }
 
       const index = this._textureIndex++
-      this.gl.activeTexture(this.gl.TEXTURE0 + index)
+      this.gl.activeTexture(GL_TEXTURE0 + index)
       this.gl.bindTexture(GL_TEXTURE_2D, texture)
       if (value.needsUpdate) {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, value.image!)
