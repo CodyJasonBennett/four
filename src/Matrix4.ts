@@ -27,27 +27,10 @@ export type Matrix4Tuple = [
 /**
  * Calculates a 4x4 matrix.
  */
-export class Matrix4 extends ARRAY_TYPE {
-  constructor(
-    m00 = 1,
-    m01 = 0,
-    m02 = 0,
-    m03 = 0,
-    m10 = 0,
-    m11 = 1,
-    m12 = 0,
-    m13 = 0,
-    m20 = 0,
-    m21 = 0,
-    m22 = 1,
-    m23 = 0,
-    m30 = 0,
-    m31 = 0,
-    m32 = 0,
-    m33 = 1,
-  ) {
+export class Matrix4 extends ARRAY_TYPE<number> {
+  constructor() {
     super(16)
-    this.set(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33)
+    this.identity()
   }
 
   /**
@@ -326,7 +309,7 @@ export class Matrix4 extends ARRAY_TYPE {
   }
 
   /**
-   * Converts a WebGL NDC space `[-1, 1]` to a WebGPU `[0, 1]` NDC space.
+   * Converts from a WebGL NDC space `[-1, 1]` to a WebGPU `[0, 1]` NDC space.
    */
   normalNDC(): this {
     this[8] = (this[8] + this[12]) / 2

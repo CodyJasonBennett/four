@@ -10,7 +10,7 @@ export type Vector3Tuple = [x: number, y: number, z: number]
 /**
  * Calculates a three-dimensional (x, y, z) vector.
  */
-export class Vector3 extends ARRAY_TYPE {
+export class Vector3 extends ARRAY_TYPE<number> {
   constructor(x = 0, y = 0, z = 0) {
     super(3)
     this.set(x, y, z)

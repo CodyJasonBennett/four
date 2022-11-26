@@ -9,7 +9,7 @@ export type QuaternionTuple = [x: number, y: number, z: number, w: number]
 /**
  * Calculates a quaternion with a defined rotation axis (x, y, z) and magnitude (w).
  */
-export class Quaternion extends ARRAY_TYPE {
+export class Quaternion extends ARRAY_TYPE<number> {
   private _a = new Vector3()
   private _b = new Vector3()
   private _c = new Vector3()

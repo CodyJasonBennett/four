@@ -470,7 +470,7 @@ export class WebGLRenderer {
 
       // Frustum cull if able
       if (mesh.frustumCulled) {
-        const inFrustum = camera.frustumContains(mesh)
+        const inFrustum = camera.frustum.contains(mesh)
         if (!inFrustum) return true
       }
 

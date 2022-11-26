@@ -1,4 +1,5 @@
 export * from './Camera'
+export * from './Frustum'
 export * from './Geometry'
 export * from './Material'
 export * from './Matrix4'
