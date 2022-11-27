@@ -481,7 +481,7 @@ export class WebGLRenderer {
     })
 
     // Don't depth sort without camera
-    if (!camera) return unsorted
+    if (!camera) return sorted.concat(unsorted)
 
     // Depth sort if able
     return sorted
