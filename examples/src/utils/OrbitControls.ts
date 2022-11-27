@@ -125,8 +125,13 @@ export class OrbitControls {
       const deltaY = (event.pageY - prevPointer.pageY) / this._pointers.size
 
       const type = event.pointerType === 'touch' ? this._pointers.size : event.buttons
-      if (type === BUTTONS.LEFT) this.orbit(deltaX, deltaY)
-      else if (type === BUTTONS.RIGHT && this.enablePan) this.pan(deltaX, deltaY)
+      if (type === BUTTONS.LEFT) {
+        this._element!.style.cursor = 'grabbing'
+        this.orbit(deltaX, deltaY)
+      } else if (type === BUTTONS.RIGHT) {
+        this._element!.style.cursor = 'grabbing'
+        if (this.enablePan) this.pan(deltaX, deltaY)
+      }
     } else if (event.pointerType !== 'touch') {
       this._element!.setPointerCapture(event.pointerId)
     }
@@ -135,6 +140,7 @@ export class OrbitControls {
   }
 
   private _onPointerUp(event: PointerEvent): void {
+    this._element!.style.cursor = 'grab'
     this._element!.style.touchAction = this.enableZoom || this.enablePan ? 'none' : 'pinch-zoom'
     if (event.pointerType !== 'touch') this._element!.releasePointerCapture(event.pointerId)
     this._pointers.delete(event.pointerId)
@@ -176,12 +182,13 @@ export class OrbitControls {
   connect(element: HTMLElement): void {
     if (this._element) this.disconnect(this._element)
     element.addEventListener('contextmenu', this._onContextMenu)
-    element.addEventListener('wheel', this._onScroll)
+    element.addEventListener('wheel', this._onScroll, { passive: true })
     element.addEventListener('pointermove', this._onPointerMove)
     element.addEventListener('pointerup', this._onPointerUp)
     element.addEventListener('keydown', this._onKeyDown)
     element.tabIndex = 0
     this._element = element
+    this._element.style.cursor = 'grab'
   }
 
   /**
@@ -195,6 +202,7 @@ export class OrbitControls {
     element.removeEventListener('keydown', this._onKeyDown)
     this._pointers.forEach(this._onPointerUp)
     element.style.touchAction = ''
+    this._element!.style.cursor = ''
     this._element = null
   }
 

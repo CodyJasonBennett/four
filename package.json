@@ -35,7 +35,7 @@
     "vite": "^3.2.4"
   },
   "scripts": {
-    "dev": "vite demo",
+    "dev": "vite examples",
     "build": "microbundle --raw -f esm,cjs",
     "lint": "tsc"
   },

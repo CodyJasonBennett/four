@@ -6,20 +6,16 @@
     <style>
       body {
         margin: 0;
-        background: #040404;
       }
 
       canvas {
-        cursor: grab;
         display: block;
-      }
-
-      canvas:active {
-        cursor: grabbing;
       }
     </style>
   </head>
   <body>
-    <script type="module" src="./src/index.ts"></script>
+    <script type="module">
+      for (const module of Object.values(import.meta.glob('./src/*.ts'))) await module()
+    </script>
   </body>
 </html>
