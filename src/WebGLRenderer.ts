@@ -12,6 +12,7 @@ const GL_FRAMEBUFFER = 0x8d40
 const GL_COLOR_ATTACHMENT0 = 0x8ce0
 const GL_TEXTURE_2D = 0x0de1
 const GL_TEXTURE_MIN_FILTER = 0x2801
+const GL_LINEAR = 0x2601
 const GL_NEAREST = 0x2600
 const GL_RGBA = 0x1908
 const GL_UNSIGNED_BYTE = 0x1401
@@ -306,7 +307,7 @@ export class WebGLRenderer {
         texture = this.gl.createTexture()!
         this.gl.bindTexture(GL_TEXTURE_2D, texture)
         this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        this.gl.generateMipmap(GL_TEXTURE_2D)
+        this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         this._textures.set(value, texture)
       }
 
