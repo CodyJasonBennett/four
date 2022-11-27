@@ -283,10 +283,10 @@ export class Matrix4 extends ARRAY_TYPE<number> {
    * Converts from a WebGL NDC space `[-1, 1]` to a WebGPU `[0, 1]` NDC space.
    */
   normalNDC(): this {
-    this[8] = (this[8] + this[12]) / 2
-    this[9] = (this[9] + this[13]) / 2
-    this[10] = (this[10] + this[14]) / 2
-    this[11] = (this[11] + this[15]) / 2
+    this[8] += this[12] /= 2
+    this[9] += this[13] /= 2
+    this[10] += this[14] /= 2
+    this[11] += this[15] /= 2
 
     return this
   }
