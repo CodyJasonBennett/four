@@ -156,14 +156,14 @@ export class WebGLRenderer {
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
-  protected _compiled = new MAP_TYPE<Mesh, Compiled>()
-  protected _programs = new MAP_TYPE<Material, WebGLProgram>()
-  protected _VAOs = new MAP_TYPE<Geometry, WebGLVertexArrayObject>()
-  protected _buffers = new MAP_TYPE<Attribute, WebGLBuffer>()
-  protected _textures = new MAP_TYPE<Texture, WebGLTexture>()
-  protected _FBOs = new MAP_TYPE<RenderTarget, WebGLFramebuffer>()
-  protected _textureIndex = 0
-  protected _v = new Vector3()
+  private _compiled = new MAP_TYPE<Mesh, Compiled>()
+  private _programs = new MAP_TYPE<Material, WebGLProgram>()
+  private _VAOs = new MAP_TYPE<Geometry, WebGLVertexArrayObject>()
+  private _buffers = new MAP_TYPE<Attribute, WebGLBuffer>()
+  private _textures = new MAP_TYPE<Texture, WebGLTexture>()
+  private _FBOs = new MAP_TYPE<RenderTarget, WebGLFramebuffer>()
+  private _textureIndex = 0
+  private _v = new Vector3()
 
   constructor({ canvas, context, ...rest }: Partial<WebGLRendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
