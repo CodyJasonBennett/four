@@ -11,3 +11,5 @@ export const sqrt = Math.sqrt
 export const min = Math.min
 export const max = Math.max
 export const floor = Math.floor
+
+export const MAP_TYPE = WeakMap

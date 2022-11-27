@@ -6,7 +6,7 @@ import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
 import { Texture } from './Texture'
-import { min, max, floor } from './_shared'
+import { min, max, floor, MAP_TYPE } from './_shared'
 
 const GL_FRAMEBUFFER = 0x8d40
 const GL_COLOR_ATTACHMENT0 = 0x8ce0
@@ -156,12 +156,12 @@ export class WebGLRenderer {
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
-  protected _compiled = new WeakMap<Mesh, Compiled>()
-  protected _programs = new WeakMap<Material, WebGLProgram>()
-  protected _VAOs = new WeakMap<Geometry, WebGLVertexArrayObject>()
-  protected _buffers = new WeakMap<Attribute, WebGLBuffer>()
-  protected _textures = new WeakMap<Texture, WebGLTexture>()
-  protected _FBOs = new WeakMap<RenderTarget, WebGLFramebuffer>()
+  protected _compiled = new MAP_TYPE<Mesh, Compiled>()
+  protected _programs = new MAP_TYPE<Material, WebGLProgram>()
+  protected _VAOs = new MAP_TYPE<Geometry, WebGLVertexArrayObject>()
+  protected _buffers = new MAP_TYPE<Attribute, WebGLBuffer>()
+  protected _textures = new MAP_TYPE<Texture, WebGLTexture>()
+  protected _FBOs = new MAP_TYPE<RenderTarget, WebGLFramebuffer>()
   protected _textureIndex = 0
   protected _v = new Vector3()
 
