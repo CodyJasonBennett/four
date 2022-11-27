@@ -67,23 +67,25 @@ export class Matrix4 extends ARRAY_TYPE<number> {
         this[i] *= t
       }
     } else {
+      const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = this
+      const [t00, t01, t02, t03, t10, t11, t12, t13, t20, t21, t22, t23, t30, t31, t32, t33] = t
       this.set(
-        this[0] * t[0] + this[4] * t[1] + this[8] * t[2] + this[12] * t[3],
-        this[1] * t[0] + this[5] * t[1] + this[9] * t[2] + this[13] * t[3],
-        this[2] * t[0] + this[6] * t[1] + this[10] * t[2] + this[14] * t[3],
-        this[3] * t[0] + this[7] * t[1] + this[11] * t[2] + this[15] * t[3],
-        this[0] * t[4] + this[4] * t[5] + this[8] * t[6] + this[12] * t[7],
-        this[1] * t[4] + this[5] * t[5] + this[9] * t[6] + this[13] * t[7],
-        this[2] * t[4] + this[6] * t[5] + this[10] * t[6] + this[14] * t[7],
-        this[3] * t[4] + this[7] * t[5] + this[11] * t[6] + this[15] * t[7],
-        this[0] * t[8] + this[4] * t[9] + this[8] * t[10] + this[12] * t[11],
-        this[1] * t[8] + this[5] * t[9] + this[9] * t[10] + this[13] * t[11],
-        this[2] * t[8] + this[6] * t[9] + this[10] * t[10] + this[14] * t[11],
-        this[3] * t[8] + this[7] * t[9] + this[11] * t[10] + this[15] * t[11],
-        this[0] * t[12] + this[4] * t[13] + this[8] * t[14] + this[12] * t[15],
-        this[1] * t[12] + this[5] * t[13] + this[9] * t[14] + this[13] * t[15],
-        this[2] * t[12] + this[6] * t[13] + this[10] * t[14] + this[14] * t[15],
-        this[3] * t[12] + this[7] * t[13] + this[11] * t[14] + this[15] * t[15],
+        m00 * t00 + m10 * t01 + m20 * t02 + m30 * t03,
+        m01 * t00 + m11 * t01 + m21 * t02 + m31 * t03,
+        m02 * t00 + m12 * t01 + m22 * t02 + m32 * t03,
+        m03 * t00 + m13 * t01 + m23 * t02 + m33 * t03,
+        m00 * t10 + m10 * t11 + m20 * t12 + m30 * t13,
+        m01 * t10 + m11 * t11 + m21 * t12 + m31 * t13,
+        m02 * t10 + m12 * t11 + m22 * t12 + m32 * t13,
+        m03 * t10 + m13 * t11 + m23 * t12 + m33 * t13,
+        m00 * t20 + m10 * t21 + m20 * t22 + m30 * t23,
+        m01 * t20 + m11 * t21 + m21 * t22 + m31 * t23,
+        m02 * t20 + m12 * t21 + m22 * t22 + m32 * t23,
+        m03 * t20 + m13 * t21 + m23 * t22 + m33 * t23,
+        m00 * t30 + m10 * t31 + m20 * t32 + m30 * t33,
+        m01 * t30 + m11 * t31 + m21 * t32 + m31 * t33,
+        m02 * t30 + m12 * t31 + m22 * t32 + m32 * t33,
+        m03 * t30 + m13 * t31 + m23 * t32 + m33 * t33,
       )
     }
 
@@ -94,85 +96,71 @@ export class Matrix4 extends ARRAY_TYPE<number> {
    * Returns the determinant of this matrix.
    */
   determinant(): number {
-    const b0 = this[0] * this[5] - this[1] * this[4]
-    const b1 = this[0] * this[6] - this[2] * this[4]
-    const b2 = this[1] * this[6] - this[2] * this[5]
-    const b3 = this[8] * this[13] - this[9] * this[12]
-    const b4 = this[8] * this[14] - this[10] * this[12]
-    const b5 = this[9] * this[14] - this[10] * this[13]
-    const b6 = this[0] * b5 - this[1] * b4 + this[2] * b3
-    const b7 = this[4] * b5 - this[5] * b4 + this[6] * b3
-    const b8 = this[8] * b2 - this[9] * b1 + this[10] * b0
-    const b9 = this[12] * b2 - this[13] * b1 + this[14] * b0
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = this
 
-    return this[7] * b6 - this[3] * b7 + this[15] * b8 - this[11] * b9
+    const b0 = m00 * m11 - m01 * m10
+    const b1 = m00 * m12 - m02 * m10
+    const b2 = m01 * m12 - m02 * m11
+    const b3 = m20 * m31 - m21 * m30
+    const b4 = m20 * m32 - m22 * m30
+    const b5 = m21 * m32 - m22 * m31
+    const b6 = m00 * b5 - m01 * b4 + m02 * b3
+    const b7 = m10 * b5 - m11 * b4 + m12 * b3
+    const b8 = m20 * b2 - m21 * b1 + m22 * b0
+    const b9 = m30 * b2 - m31 * b1 + m32 * b0
+
+    return m13 * b6 - m03 * b7 + m33 * b8 - m23 * b9
   }
 
   /**
    * Transposes this matrix in place over its diagonal.
    */
   transpose(): this {
-    return this.set(
-      this[0],
-      this[4],
-      this[8],
-      this[12],
-      this[1],
-      this[5],
-      this[9],
-      this[13],
-      this[2],
-      this[6],
-      this[10],
-      this[14],
-      this[3],
-      this[7],
-      this[11],
-      this[15],
-    )
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = this
+    return this.set(m00, m10, m20, m30, m01, m11, m21, m31, m02, m12, m22, m32, m03, m13, m23, m33)
   }
 
   /**
    * Calculates the inverse of this matrix.
    */
   invert(): this {
-    const b00 = this[0] * this[5] - this[1] * this[4]
-    const b01 = this[0] * this[6] - this[2] * this[4]
-    const b02 = this[0] * this[7] - this[3] * this[4]
-    const b03 = this[1] * this[6] - this[2] * this[5]
-    const b04 = this[1] * this[7] - this[3] * this[5]
-    const b05 = this[2] * this[7] - this[3] * this[6]
-    const b06 = this[8] * this[13] - this[9] * this[12]
-    const b07 = this[8] * this[14] - this[10] * this[12]
-    const b08 = this[8] * this[15] - this[11] * this[12]
-    const b09 = this[9] * this[14] - this[10] * this[13]
-    const b10 = this[9] * this[15] - this[11] * this[13]
-    const b11 = this[10] * this[15] - this[11] * this[14]
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = this
+
+    const b00 = m00 * m11 - m01 * m10
+    const b01 = m00 * m12 - m02 * m10
+    const b02 = m00 * m13 - m03 * m10
+    const b03 = m01 * m12 - m02 * m11
+    const b04 = m01 * m13 - m03 * m11
+    const b05 = m02 * m13 - m03 * m12
+    const b06 = m20 * m31 - m21 * m30
+    const b07 = m20 * m32 - m22 * m30
+    const b08 = m20 * m33 - m23 * m30
+    const b09 = m21 * m32 - m22 * m31
+    const b10 = m21 * m33 - m23 * m31
+    const b11 = m22 * m33 - m23 * m32
 
     // Make sure we're not dividing by zero
     const det = this.determinant()
     if (!det) return this
 
-    const invDet = 1 / det
-
     return this.set(
-      this[5] * b11 - this[6] * b10 + this[7] * b09,
-      this[2] * b10 - this[1] * b11 - this[3] * b09,
-      this[13] * b05 - this[14] * b04 + this[15] * b03,
-      this[10] * b04 - this[9] * b05 - this[11] * b03,
-      this[6] * b08 - this[4] * b11 - this[7] * b07,
-      this[0] * b11 - this[2] * b08 + this[3] * b07,
-      this[14] * b02 - this[12] * b05 - this[15] * b01,
-      this[8] * b05 - this[10] * b02 + this[11] * b01,
-      this[4] * b10 - this[5] * b08 + this[7] * b06,
-      this[1] * b08 - this[0] * b10 - this[3] * b06,
-      this[12] * b04 - this[13] * b02 + this[15] * b00,
-      this[9] * b02 - this[8] * b04 - this[11] * b00,
-      this[5] * b07 - this[4] * b09 - this[6] * b06,
-      this[0] * b09 - this[1] * b07 + this[2] * b06,
-      this[13] * b01 - this[12] * b03 - this[14] * b00,
-      this[8] * b03 - this[9] * b01 + this[10] * b00,
-    ).multiply(invDet)
+      m11 * b11 - m12 * b10 + m13 * b09,
+      m02 * b10 - m01 * b11 - m03 * b09,
+      m31 * b05 - m32 * b04 + m33 * b03,
+      m22 * b04 - m21 * b05 - m23 * b03,
+      m12 * b08 - m10 * b11 - m13 * b07,
+      m00 * b11 - m02 * b08 + m03 * b07,
+      m32 * b02 - m30 * b05 - m33 * b01,
+      m20 * b05 - m22 * b02 + m23 * b01,
+      m10 * b10 - m11 * b08 + m13 * b06,
+      m01 * b08 - m00 * b10 - m03 * b06,
+      m30 * b04 - m31 * b02 + m33 * b00,
+      m21 * b02 - m20 * b04 - m23 * b00,
+      m11 * b07 - m10 * b09 - m12 * b06,
+      m00 * b09 - m01 * b07 + m02 * b06,
+      m31 * b01 - m30 * b03 - m32 * b00,
+      m20 * b03 - m21 * b01 + m22 * b00,
+    ).multiply(1 / det)
   }
 
   /**
@@ -183,24 +171,7 @@ export class Matrix4 extends ARRAY_TYPE<number> {
     const f = 1 / tan(fovRad / 2)
     const depth = 1 / (near - far)
 
-    this[0] = f / aspect
-    this[1] = 0
-    this[2] = 0
-    this[3] = 0
-    this[4] = 0
-    this[5] = f
-    this[6] = 0
-    this[7] = 0
-    this[8] = 0
-    this[9] = 0
-    this[10] = (far + near) * depth
-    this[11] = -1
-    this[12] = 0
-    this[13] = 0
-    this[14] = 2 * far * near * depth
-    this[15] = 0
-
-    return this
+    return this.set(f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * depth, -1, 0, 0, 2 * far * near * depth, 0)
   }
 
   /**
@@ -211,24 +182,24 @@ export class Matrix4 extends ARRAY_TYPE<number> {
     const vertical = 1 / (bottom - top)
     const depth = 1 / (near - far)
 
-    this[0] = -2 * horizontal
-    this[1] = 0
-    this[2] = 0
-    this[3] = 0
-    this[4] = 0
-    this[5] = -2 * vertical
-    this[6] = 0
-    this[7] = 0
-    this[8] = 0
-    this[9] = 0
-    this[10] = 2 * depth
-    this[11] = 0
-    this[12] = (left + right) * horizontal
-    this[13] = (top + bottom) * vertical
-    this[14] = (far + near) * depth
-    this[15] = 1
-
-    return this
+    return this.set(
+      -2 * horizontal,
+      0,
+      0,
+      0,
+      0,
+      -2 * vertical,
+      0,
+      0,
+      0,
+      0,
+      2 * depth,
+      0,
+      (left + right) * horizontal,
+      (top + bottom) * vertical,
+      (far + near) * depth,
+      1,
+    )
   }
 
   /**
@@ -245,67 +216,67 @@ export class Matrix4 extends ARRAY_TYPE<number> {
     const wy = quaternion.w * (quaternion.y + quaternion.y)
     const wz = quaternion.w * (quaternion.z + quaternion.z)
 
-    this[0] = (1 - (yy + zz)) * scale.x
-    this[1] = (xy + wz) * scale.x
-    this[2] = (xz - wy) * scale.x
-    this[3] = 0
-    this[4] = (xy - wz) * scale.y
-    this[5] = (1 - (xx + zz)) * scale.y
-    this[6] = (yz + wx) * scale.y
-    this[7] = 0
-    this[8] = (xz + wy) * scale.z
-    this[9] = (yz - wx) * scale.z
-    this[10] = (1 - (xx + yy)) * scale.z
-    this[11] = 0
-    this[12] = position.x
-    this[13] = position.y
-    this[14] = position.z
-    this[15] = 1
-
-    return this
+    return this.set(
+      (1 - (yy + zz)) * scale.x,
+      (xy + wz) * scale.x,
+      (xz - wy) * scale.x,
+      0,
+      (xy - wz) * scale.y,
+      (1 - (xx + zz)) * scale.y,
+      (yz + wx) * scale.y,
+      0,
+      (xz + wy) * scale.z,
+      (yz - wx) * scale.z,
+      (1 - (xx + yy)) * scale.z,
+      0,
+      position.x,
+      position.y,
+      position.z,
+      1,
+    )
   }
 
   /**
    * Calculates a normal matrix from a model-view matrix.
    */
   normal(m: Matrix4): this {
-    const b00 = m[0] * m[5] - m[1] * m[4]
-    const b01 = m[0] * m[6] - m[2] * m[4]
-    const b02 = m[0] * m[7] - m[3] * m[4]
-    const b03 = m[1] * m[6] - m[2] * m[5]
-    const b04 = m[1] * m[7] - m[3] * m[5]
-    const b05 = m[2] * m[7] - m[3] * m[6]
-    const b06 = m[8] * m[13] - m[9] * m[12]
-    const b07 = m[8] * m[14] - m[10] * m[12]
-    const b08 = m[8] * m[15] - m[11] * m[12]
-    const b09 = m[9] * m[14] - m[10] * m[13]
-    const b10 = m[9] * m[15] - m[11] * m[13]
-    const b11 = m[10] * m[15] - m[11] * m[14]
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = m
+
+    const b00 = m00 * m11 - m01 * m10
+    const b01 = m00 * m12 - m02 * m10
+    const b02 = m00 * m13 - m03 * m10
+    const b03 = m01 * m12 - m02 * m11
+    const b04 = m01 * m13 - m03 * m11
+    const b05 = m02 * m13 - m03 * m12
+    const b06 = m20 * m31 - m21 * m30
+    const b07 = m20 * m32 - m22 * m30
+    const b08 = m20 * m33 - m23 * m30
+    const b09 = m21 * m32 - m22 * m31
+    const b10 = m21 * m33 - m23 * m31
+    const b11 = m22 * m33 - m23 * m32
 
     // Make sure we're not dividing by zero
     const det = m.determinant()
     if (!det) return this
 
-    const invDet = 1 / det
-
     return this.set(
-      m[5] * b11 - m[6] * b10 + m[7] * b09,
-      m[2] * b10 - m[1] * b11 - m[3] * b09,
-      m[13] * b05 - m[14] * b04 + m[15] * b03,
+      m11 * b11 - m12 * b10 + m13 * b09,
+      m02 * b10 - m01 * b11 - m03 * b09,
+      m31 * b05 - m32 * b04 + m33 * b03,
       0,
-      m[6] * b08 - m[4] * b11 - m[7] * b07,
-      m[0] * b11 - m[2] * b08 + m[3] * b07,
-      m[14] * b02 - m[12] * b05 - m[15] * b01,
+      m12 * b08 - m10 * b11 - m13 * b07,
+      m00 * b11 - m02 * b08 + m03 * b07,
+      m32 * b02 - m30 * b05 - m33 * b01,
       0,
-      m[4] * b10 - m[5] * b08 + m[7] * b06,
-      m[1] * b08 - m[0] * b10 - m[3] * b06,
-      m[12] * b04 - m[13] * b02 + m[15] * b00,
+      m10 * b10 - m11 * b08 + m13 * b06,
+      m01 * b08 - m00 * b10 - m03 * b06,
+      m30 * b04 - m31 * b02 + m33 * b00,
       0,
       0,
       0,
       0,
       1,
-    ).multiply(invDet)
+    ).multiply(1 / det)
   }
 
   /**

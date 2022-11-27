@@ -176,12 +176,12 @@ export class Vector3 extends ARRAY_TYPE<number> {
    * Applies transforms from a {@link Matrix4} to this vector.
    */
   applyMatrix4(m: Matrix4): this {
-    const w = m[3] * this.x + m[7] * this.y + m[11] * this.z + m[15] || 1
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = m
 
     return this.set(
-      m[0] * this.x + m[4] * this.y + m[8] * this.z + m[12],
-      m[1] * this.x + m[5] * this.y + m[9] * this.z + m[13],
-      m[2] * this.x + m[6] * this.y + m[10] * this.z + m[14],
-    ).divide(w)
+      m00 * this.x + m10 * this.y + m20 * this.z + m30,
+      m01 * this.x + m11 * this.y + m21 * this.z + m31,
+      m02 * this.x + m12 * this.y + m22 * this.z + m32,
+    ).divide(m03 * this.x + m13 * this.y + m23 * this.z + m33 || 1)
   }
 }

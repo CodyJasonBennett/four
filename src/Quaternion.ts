@@ -107,11 +107,13 @@ export class Quaternion extends ARRAY_TYPE<number> {
         this[i] *= t
       }
     } else {
+      const [qx, qy, qz, qw] = this
+      const [tx, ty, tz, tw] = t
       this.set(
-        this.x * t.w + this.w * t.x + this.y * t.z - this.z * t.y,
-        this.y * t.w + this.w * t.y + this.z * t.x - this.x * t.z,
-        this.z * t.w + this.w * t.z + this.x * t.y - this.y * t.x,
-        this.w * t.w - this.x * t.x - this.y * t.y - this.z * t.z,
+        qx * tw + qw * tx + qy * tz - qz * ty,
+        qy * tw + qw * ty + qz * tx - qx * tz,
+        qz * tw + qw * tz + qx * ty - qy * tx,
+        qw * tw - qx * tx - qy * ty - qz * tz,
       )
     }
 
