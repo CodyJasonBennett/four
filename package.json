@@ -39,6 +39,9 @@
     "build": "microbundle --raw -f esm,cjs",
     "lint": "tsc"
   },
+  "mangle": {
+    "regex": "^_"
+  },
   "browserslist": [
     "node 16"
   ]
