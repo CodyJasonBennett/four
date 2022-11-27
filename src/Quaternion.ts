@@ -1,5 +1,5 @@
 import { Vector3 } from './Vector3'
-import { hypot, acos, sin, sqrt, EPSILON, ARRAY_TYPE } from './_shared'
+import { hypot, acos, sin, sqrt, EPSILON, ARRAY_TYPE, cos } from './_shared'
 
 /**
  * Represents the components of a {@link Quaternion}.
@@ -162,17 +162,22 @@ export class Quaternion extends ARRAY_TYPE<number> {
   }
 
   /**
-   * Applies this quaternion's rotation axis and angle to `axis`.
+   * Sets this quaternion's components from a Euler angle in radians (assumes XYZ order).
    */
-  getAxisAngle(axis: Vector3): Vector3 {
-    const rad = acos(this.w) * 2
-    const s = sin(rad / 2)
+  fromEuler(x: number, y: number, z: number): this {
+    const sx = sin(x)
+    const cx = cos(x)
+    const sy = sin(y)
+    const cy = cos(y)
+    const sz = sin(z)
+    const cz = cos(z)
 
-    if (s > EPSILON) {
-      return axis.set(this.x / s, this.y / s, this.z / s)
-    } else {
-      return axis.set(1, 0, 0)
-    }
+    return this.set(
+      sx * cy * cz + cx * sy * sz,
+      cx * sy * cz - sx * cy * sz,
+      cx * cy * sz + sx * sy * cz,
+      cx * cy * cz - sx * sy * sz,
+    )
   }
 
   /**
