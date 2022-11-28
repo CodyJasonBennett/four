@@ -206,15 +206,15 @@ export class Matrix4 extends ARRAY_TYPE<number> {
    * Composes this matrix's elements from position, quaternion, and scale properties.
    */
   compose(position: Vector3, quaternion: Quaternion, scale: Vector3): this {
-    const xx = quaternion.x * (quaternion.x + quaternion.x)
-    const xy = quaternion.x * (quaternion.y + quaternion.y)
-    const xz = quaternion.x * (quaternion.z + quaternion.z)
-    const yy = quaternion.y * (quaternion.y + quaternion.y)
-    const yz = quaternion.y * (quaternion.z + quaternion.z)
-    const zz = quaternion.z * (quaternion.z + quaternion.z)
-    const wx = quaternion.w * (quaternion.x + quaternion.x)
-    const wy = quaternion.w * (quaternion.y + quaternion.y)
-    const wz = quaternion.w * (quaternion.z + quaternion.z)
+    const xx = 2 * quaternion.x * quaternion.x
+    const xy = 2 * quaternion.y * quaternion.x
+    const xz = 2 * quaternion.z * quaternion.x
+    const yy = 2 * quaternion.y * quaternion.y
+    const yz = 2 * quaternion.z * quaternion.y
+    const zz = 2 * quaternion.z * quaternion.z
+    const wx = 2 * quaternion.x * quaternion.w
+    const wy = 2 * quaternion.y * quaternion.w
+    const wz = 2 * quaternion.z * quaternion.w
 
     return this.set(
       (1 - (yy + zz)) * scale.x,
