@@ -18,4 +18,11 @@ export class Texture {
      */
     public image?: ImageRepresentation,
   ) {}
+
+  /**
+   * Disposes texture from GPU memory.
+   */
+  dispose(): void {
+    // Implemented by renderer
+  }
 }

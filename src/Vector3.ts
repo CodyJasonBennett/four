@@ -1,6 +1,6 @@
 import type { Quaternion } from './Quaternion'
 import type { Matrix4 } from './Matrix4'
-import { ARRAY_TYPE, hypot, sqrt } from './_shared'
+import { ARRAY_TYPE, hypot, sqrt } from './_utils'
 
 /**
  * Represents the components of a {@link Vector3}.

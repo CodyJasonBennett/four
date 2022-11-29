@@ -1,5 +1,5 @@
 import { Texture } from './Texture'
-import { ARRAY_TYPE } from './_shared'
+import { ARRAY_TYPE } from './_utils'
 
 /**
  * Constructs a render target to draw into.
@@ -38,5 +38,12 @@ export class RenderTarget {
     this.width = width
     this.height = height
     this.needsUpdate = true
+  }
+
+  /**
+   * Disposes render target from GPU memory.
+   */
+  dispose(): void {
+    // Implemented by renderer
   }
 }

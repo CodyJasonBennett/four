@@ -40,4 +40,11 @@ export class Geometry {
       this.attributes[key].needsUpdate = true
     }
   }
+
+  /**
+   * Disposes geometry from GPU memory.
+   */
+  dispose(): void {
+    // Implemented by renderer
+  }
 }

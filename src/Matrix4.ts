@@ -1,6 +1,6 @@
 import type { Vector3 } from './Vector3'
 import type { Quaternion } from './Quaternion'
-import { ARRAY_TYPE, PI, tan } from './_shared'
+import { ARRAY_TYPE, PI, tan } from './_utils'
 
 /**
  * Represents the components of a {@link Matrix4}.

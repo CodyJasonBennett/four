@@ -1,4 +1,4 @@
-import { ARRAY_TYPE, max, sqrt } from './_shared'
+import { ARRAY_TYPE, max, sqrt } from './_utils'
 import { Matrix4 } from './Matrix4'
 import type { Mesh } from './Mesh'
 

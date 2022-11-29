@@ -6,7 +6,7 @@ import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
 import { Texture } from './Texture'
-import { min, max, floor, MAP_TYPE } from './_shared'
+import { min, max, floor, Compiled } from './_utils'
 
 const GL_FRAMEBUFFER = 0x8d40
 const GL_COLOR_ATTACHMENT0 = 0x8ce0
@@ -83,7 +83,7 @@ const GL_BLEND_OPERATIONS: Record<BlendOperation, number> = {
 /**
  * Represents WebGL compiled {@link Mesh} state.
  */
-export interface Compiled {
+export interface WebGLCompiled {
   /**
    * The {@link WebGLProgram} for compiled {@link Material} program state.
    */
@@ -156,12 +156,12 @@ export class WebGLRenderer {
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
-  private _compiled = new MAP_TYPE<Mesh, Compiled>()
-  private _programs = new MAP_TYPE<Material, WebGLProgram>()
-  private _VAOs = new MAP_TYPE<Geometry, WebGLVertexArrayObject>()
-  private _buffers = new MAP_TYPE<Attribute, WebGLBuffer>()
-  private _textures = new MAP_TYPE<Texture, WebGLTexture>()
-  private _FBOs = new MAP_TYPE<RenderTarget, WebGLFramebuffer>()
+  private _compiled = new Compiled<Mesh, WebGLCompiled>()
+  private _programs = new Compiled<Material, WebGLProgram>()
+  private _VAOs = new Compiled<Geometry, WebGLVertexArrayObject>()
+  private _buffers = new Compiled<Attribute, WebGLBuffer>()
+  private _textures = new Compiled<Texture, WebGLTexture>()
+  private _FBOs = new Compiled<RenderTarget, WebGLFramebuffer>()
   private _textureIndex = 0
   private _v = new Vector3()
 
@@ -212,7 +212,7 @@ export class WebGLRenderer {
           target = this.gl.createTexture()!
           this.gl.bindTexture(GL_TEXTURE_2D, target)
           this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-          this._textures.set(texture, target)
+          this._textures.set(texture, target, () => this.gl.deleteTexture(target!))
           texture.needsUpdate = false
         }
         this.gl.bindTexture(GL_TEXTURE_2D, target)
@@ -234,7 +234,7 @@ export class WebGLRenderer {
       this.gl.drawBuffers(attachments)
       renderTarget.needsUpdate = false
 
-      this._FBOs.set(renderTarget, FBO)
+      this._FBOs.set(renderTarget, FBO, () => this.gl.deleteFramebuffer(FBO!))
     }
 
     this.gl.bindFramebuffer(GL_FRAMEBUFFER, FBO)
@@ -308,7 +308,7 @@ export class WebGLRenderer {
         this.gl.bindTexture(GL_TEXTURE_2D, texture)
         this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
         this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        this._textures.set(value, texture)
+        this._textures.set(value, texture, () => this.gl.deleteTexture(texture))
       }
 
       const index = this._textureIndex++
@@ -339,7 +339,7 @@ export class WebGLRenderer {
   /**
    * Compiles a mesh or program and sets initial uniforms.
    */
-  compile(mesh: Mesh, camera?: Camera): Compiled {
+  compile(mesh: Mesh, camera?: Camera): WebGLCompiled {
     mesh.material.uniforms.modelMatrix = mesh.matrix
 
     if (camera) {
@@ -357,7 +357,7 @@ export class WebGLRenderer {
     let program = this._programs.get(mesh.material)
     if (!program) {
       program = this.gl.createProgram()!
-      this._programs.set(mesh.material, program)
+      this._programs.set(mesh.material, program, () => this.gl.deleteProgram(program!))
 
       const vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
       this.gl.shaderSource(vertexShader, mesh.material.vertex)
@@ -386,7 +386,7 @@ export class WebGLRenderer {
     let VAO = this._VAOs.get(mesh.geometry)
     if (!VAO) {
       VAO = this.gl.createVertexArray()!
-      this._VAOs.set(mesh.geometry, VAO)
+      this._VAOs.set(mesh.geometry, VAO, () => this.gl.deleteVertexArray(VAO!))
     }
 
     this.gl.useProgram(program)

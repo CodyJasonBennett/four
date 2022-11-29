@@ -134,4 +134,11 @@ export class Material implements MaterialOptions {
 
     Object.assign(this, options)
   }
+
+  /**
+   * Disposes material from GPU memory.
+   */
+  dispose(): void {
+    // Implemented by renderer
+  }
 }
