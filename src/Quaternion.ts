@@ -237,30 +237,24 @@ export class Quaternion extends ARRAY_TYPE<number> {
 
     const y = this._c.copy(z).cross(x)
 
-    const sm11 = x.x
-    const sm12 = x.y
-    const sm13 = x.z
-    const sm21 = y.x
-    const sm22 = y.y
-    const sm23 = y.z
-    const sm31 = z.x
-    const sm32 = z.y
-    const sm33 = z.z
+    const [sm11, sm12, sm13] = x
+    const [sm21, sm22, sm23] = y
+    const [sm31, sm32, sm33] = z
 
     const trace = sm11 + sm22 + sm33
 
     if (trace > 0) {
-      const S = sqrt(trace + 1.0) * 2
-      return this.set((sm23 - sm32) / S, (sm31 - sm13) / S, (sm12 - sm21) / S, 0.25 * S)
+      const S = sqrt(trace + 1) * 2
+      return this.set((sm23 - sm32) / S, (sm31 - sm13) / S, (sm12 - sm21) / S, S / 4)
     } else if (sm11 > sm22 && sm11 > sm33) {
-      const S = sqrt(1.0 + sm11 - sm22 - sm33) * 2
-      return this.set(0.25 * S, (sm12 + sm21) / S, (sm31 + sm13) / S, (sm23 - sm32) / S)
+      const S = sqrt(1 + sm11 - sm22 - sm33) * 2
+      return this.set(S / 4, (sm12 + sm21) / S, (sm31 + sm13) / S, (sm23 - sm32) / S)
     } else if (sm22 > sm33) {
-      const S = sqrt(1.0 + sm22 - sm11 - sm33) * 2
-      return this.set((sm12 + sm21) / S, 0.25 * S, (sm23 + sm32) / S, (sm31 - sm13) / S)
+      const S = sqrt(1 + sm22 - sm11 - sm33) * 2
+      return this.set((sm12 + sm21) / S, S / 4, (sm23 + sm32) / S, (sm31 - sm13) / S)
     } else {
-      const S = sqrt(1.0 + sm33 - sm11 - sm22) * 2
-      return this.set((sm31 + sm13) / S, (sm23 + sm32) / S, 0.25 * S, (sm12 - sm21) / S)
+      const S = sqrt(1 + sm33 - sm11 - sm22) * 2
+      return this.set((sm31 + sm13) / S, (sm23 + sm32) / S, S / 4, (sm12 - sm21) / S)
     }
   }
 }
