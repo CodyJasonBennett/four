@@ -420,8 +420,8 @@ export class WebGLRenderer {
               attribute.size / slots,
               GL_FLOAT,
               false,
-              attribute.data.BYTES_PER_ELEMENT * attribute.size,
-              attribute.size * i,
+              4 * attribute.size,
+              i * attribute.size,
             )
             if (attribute.divisor) this.gl.vertexAttribDivisor(location + i, attribute.divisor)
           }
@@ -457,42 +457,35 @@ export class WebGLRenderer {
    * Returns a list of visible meshes. Will frustum cull and depth-sort with a camera if available.
    */
   sort(scene: Object3D, camera?: Camera): Mesh[] {
-    const sorted: Mesh[] = []
-    const unsorted: Mesh[] = []
+    const renderList: Mesh[] = []
 
     scene.traverse((node) => {
       // Skip invisible nodes
       if (!node.visible) return true
 
       // Filter to meshes
-      const mesh = node as Mesh
-      if (!(mesh instanceof Mesh)) return
-
-      // Skip culling/sorting without camera
-      if (!camera) return void unsorted.push(mesh)
+      if (!(node instanceof Mesh)) return
 
       // Frustum cull if able
-      if (mesh.frustumCulled) {
-        const inFrustum = camera.frustum.contains(mesh)
+      if (camera && node.frustumCulled) {
+        const inFrustum = camera.frustum.contains(node)
         if (!inFrustum) return true
       }
 
-      // Filter sortable objects
-      if (!mesh.material.depthTest) unsorted.push(mesh)
-      else sorted.push(mesh)
+      renderList.push(node)
     })
 
-    // Don't depth sort without camera
-    if (!camera) return sorted.concat(unsorted)
-
-    // Depth sort if able
-    return sorted
-      .sort(
-        (a, b) =>
+    return renderList.sort(
+      (a, b) =>
+        // Push UI to front
+        (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
+        // Depth sort with a camera if able
+        (!!camera &&
           this._v.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
-          this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z,
-      )
-      .concat(unsorted)
+            this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
+        // Reverse painter's sort transparent
+        (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
+    )
   }
 
   /**
