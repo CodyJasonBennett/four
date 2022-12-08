@@ -405,6 +405,8 @@ export class WebGLRenderer {
           this.gl.bindBuffer(type, buffer)
           this.gl.bufferData(type, attribute.data, GL_STATIC_DRAW)
           attribute.needsUpdate = false
+        } else {
+          this.gl.bindBuffer(type, buffer)
         }
 
         const location = this.gl.getAttribLocation(program, key)
