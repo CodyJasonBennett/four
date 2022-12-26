@@ -12,7 +12,7 @@ const geometry = new Geometry({
 const material = new Material({
   uniforms: {
     time: 0,
-    color: new Texture(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1)),
+    color: new Texture({ image: new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1) }),
   },
   vertex: /* glsl */ `#version 300 es
     in vec2 uv;

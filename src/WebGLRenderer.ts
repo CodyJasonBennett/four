@@ -5,15 +5,16 @@ import type { BlendFactor, BlendOperation, Side, Blending, Uniform, Material } f
 import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
-import { Texture } from './Texture'
+import { Texture, type TextureFilter, type TextureWrapping } from './Texture'
 import { min, max, floor, Compiled } from './_utils'
 
 const GL_FRAMEBUFFER = 0x8d40
 const GL_COLOR_ATTACHMENT0 = 0x8ce0
 const GL_TEXTURE_2D = 0x0de1
+const GL_TEXTURE_MAG_FILTER = 0x2800
 const GL_TEXTURE_MIN_FILTER = 0x2801
-const GL_LINEAR = 0x2601
-const GL_NEAREST = 0x2600
+const GL_TEXTURE_WRAP_S = 0x2802
+const GL_TEXTURE_WRAP_T = 0x2803
 const GL_RGBA = 0x1908
 const GL_UNSIGNED_BYTE = 0x1401
 const GL_DEPTH_TEST = 0x0b71
@@ -35,6 +36,24 @@ const GL_LESS = 0x0201
 const GL_FRONT = 0x0404
 const GL_BACK = 0x0405
 const GL_TEXTURE0 = 0x84c0
+
+const GL_NEAREST = 0x2600
+const GL_LINEAR = 0x2601
+
+const GL_TEXTURE_FILTERS: Record<TextureFilter, number> = {
+  nearest: GL_NEAREST,
+  linear: GL_LINEAR,
+} as const
+
+const GL_REPEAT = 0x2901
+const GL_CLAMP_TO_EDGE = 0x812f
+const GL_MIRRORED_REPEAT = 0x8370
+
+const GL_TEXTURE_WRAPPINGS: Record<TextureWrapping, number> = {
+  repeat: GL_REPEAT,
+  clamp: GL_CLAMP_TO_EDGE,
+  mirror: GL_MIRRORED_REPEAT,
+} as const
 
 const GL_ZERO = 0
 const GL_ONE = 1
@@ -187,6 +206,47 @@ export class WebGLRenderer {
   }
 
   /**
+   * Updates a texture with an optional `width` and `height`.
+   */
+  updateTexture(texture: Texture, width = 0, height = 0): WebGLTexture {
+    let target = this._textures.get(texture)!
+    if (!target) {
+      target = this.gl.createTexture()!
+      this._textures.set(texture, target, () => this.gl.deleteTexture(target))
+      texture.needsUpdate = true
+    }
+
+    this.gl.bindTexture(GL_TEXTURE_2D, target)
+
+    if (texture.needsUpdate) {
+      this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
+
+      const format = texture.format ?? GL_RGBA
+      const type = texture.type ?? GL_UNSIGNED_BYTE
+      if (texture.image) {
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, format, format, type, texture.image)
+      } else {
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, null)
+      }
+
+      if (texture.anisotropy) {
+        const anisotropyExt = this.gl.getExtension('EXT_texture_filter_anisotropic')
+        if (anisotropyExt)
+          this.gl.texParameterf(GL_TEXTURE_2D, anisotropyExt.TEXTURE_MAX_ANISOTROPY_EXT, texture.anisotropy)
+      }
+      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_FILTERS[texture.magFilter])
+      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_FILTERS[texture.minFilter])
+
+      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAPPINGS[texture.wrapS])
+      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAPPINGS[texture.wrapT])
+
+      texture.needsUpdate = false
+    }
+
+    return target
+  }
+
+  /**
    * Sets the current {@link RenderTarget} to render into.
    */
   setRenderTarget(renderTarget: RenderTarget | null): void {
@@ -206,28 +266,7 @@ export class WebGLRenderer {
       let attachment = GL_COLOR_ATTACHMENT0
       for (const texture of renderTarget.textures) {
         attachments.push(attachment)
-
-        let target = this._textures.get(texture)
-        if (!target) {
-          target = this.gl.createTexture()!
-          this.gl.bindTexture(GL_TEXTURE_2D, target)
-          this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-          this._textures.set(texture, target, () => this.gl.deleteTexture(target!))
-          texture.needsUpdate = false
-        }
-        this.gl.bindTexture(GL_TEXTURE_2D, target)
-        this.gl.texImage2D(
-          GL_TEXTURE_2D,
-          0,
-          GL_RGBA,
-          renderTarget.width,
-          renderTarget.height,
-          0,
-          GL_RGBA,
-          GL_UNSIGNED_BYTE,
-          null,
-        )
-
+        const target = this.updateTexture(texture, renderTarget.width, renderTarget.height)
         this.gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, target, 0)
         attachment++
       }
@@ -302,22 +341,9 @@ export class WebGLRenderer {
     if (location === -1) return
 
     if (value instanceof Texture) {
-      let texture = this._textures.get(value)!
-      if (!texture) {
-        texture = this.gl.createTexture()!
-        this.gl.bindTexture(GL_TEXTURE_2D, texture)
-        this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        this._textures.set(value, texture, () => this.gl.deleteTexture(texture))
-      }
-
       const index = this._textureIndex++
       this.gl.activeTexture(GL_TEXTURE0 + index)
-      this.gl.bindTexture(GL_TEXTURE_2D, texture)
-      if (value.needsUpdate) {
-        this.gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, value.image!)
-        value.needsUpdate = false
-      }
+      this.updateTexture(value)
       return this.gl.uniform1i(location, index)
     }
 
