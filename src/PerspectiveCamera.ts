@@ -1,7 +1,7 @@
 import { Camera } from './Camera'
 
 /**
- * Constructs a camera with an perspective projection. Useful for 3D rendering.
+ * Constructs a camera with a perspective projection. Useful for 3D rendering.
  */
 export class PerspectiveCamera extends Camera {
   constructor(

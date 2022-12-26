@@ -186,7 +186,7 @@ export class Quaternion extends ARRAY_TYPE<number> {
    * Slerps between another {@link Quaternion} with a given alpha — `t`.
    */
   slerp(q: Quaternion, t: number): this {
-    let cosom = this.x * q.x + this.y * q.y + this.z * q.z + this.w * q.w
+    let cosom = this.dot(q)
     if (cosom < 0) cosom *= -1
 
     let scale0 = 1 - t
@@ -201,14 +201,12 @@ export class Quaternion extends ARRAY_TYPE<number> {
 
     if (cosom < 0) scale1 *= -1
 
-    this.set(
+    return this.set(
       scale0 * this.x + scale1 * q.x,
       scale0 * this.y + scale1 * q.y,
       scale0 * this.z + scale1 * q.z,
       scale0 * this.w + scale1 * q.w,
     )
-
-    return this
   }
 
   /**
@@ -218,13 +216,13 @@ export class Quaternion extends ARRAY_TYPE<number> {
     const z = this._a.copy(eye).sub(target)
 
     // eye and target are in the same position
-    if (z.getLength() ** 2 === 0) z.z = 1
+    if (z.getLength() === 0) z.z = 1
     else z.normalize()
 
     const x = this._b.copy(up).cross(z)
 
     // up and z are parallel
-    if (x.getLength() ** 2 === 0) {
+    if (x.getLength() === 0) {
       const pup = this._c.copy(up)
 
       if (pup.z) pup.x += EPSILON

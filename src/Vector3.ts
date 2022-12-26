@@ -1,6 +1,6 @@
 import type { Quaternion } from './Quaternion'
 import type { Matrix4 } from './Matrix4'
-import { ARRAY_TYPE, hypot, sqrt } from './_utils'
+import { ARRAY_TYPE, hypot } from './_utils'
 
 /**
  * Represents the components of a {@link Vector3}.
@@ -127,10 +127,7 @@ export class Vector3 extends ARRAY_TYPE<number> {
    * Returns the distance from another {@link Vector3}.
    */
   distanceTo(v: Vector3): number {
-    const x = this.x - v.x
-    const y = this.x - v.y
-    const z = this.x - v.z
-    return sqrt(x * x + y * y + z * z)
+    return hypot(this.x - v.x, this.y - v.y, this.z - v.z)
   }
 
   /**
