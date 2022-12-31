@@ -63,9 +63,11 @@ export class Object3D {
    * Used internally to calculate matrix transforms.
    */
   updateMatrix(): void {
-    if (this.matrixAutoUpdate) this.matrix.compose(this.position, this.quaternion, this.scale)
-    if (this.parent) this.matrix.multiply(this.parent.matrix)
-    for (const child of this.children) child.updateMatrix()
+    if (this.matrixAutoUpdate) {
+      this.matrix.compose(this.position, this.quaternion, this.scale)
+      if (this.parent) this.matrix.multiply(this.parent.matrix)
+      for (const child of this.children) child.updateMatrix()
+    }
   }
 
   /**
