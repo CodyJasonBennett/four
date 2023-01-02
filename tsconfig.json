@@ -10,8 +10,7 @@
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "four": ["./src"],
-      "four/*": ["./src/*"]
+      "four": ["./src"]
     }
   }
 }

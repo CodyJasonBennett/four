@@ -79,7 +79,7 @@ const material = new Material({
       return out;
     }
   `,
-  fragment: /* glsl */ `
+  fragment: /* wgsl */ `
     struct FragmentIn {
       @location(0) color: vec3<f32>,
       @location(1) normal: vec3<f32>,
