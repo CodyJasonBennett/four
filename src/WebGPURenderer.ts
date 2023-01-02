@@ -462,6 +462,12 @@ export class WebGPURenderer {
   sort(scene: Object3D, camera?: Camera): Mesh[] {
     const renderList: Mesh[] = []
 
+    if (camera?.matrixAutoUpdate) {
+      camera.projectionViewMatrix.copy(camera.projectionMatrix).multiply(camera.viewMatrix)
+      camera.frustum.fromMatrix4(camera.projectionViewMatrix)
+      camera.frustum.normalNDC()
+    }
+
     scene.traverse((node) => {
       // Skip invisible nodes
       if (!node.visible) return true
@@ -543,8 +549,9 @@ export class WebGPURenderer {
       this._passEncoder.setViewport(0, 0, this._renderTarget.width, this._renderTarget.height, 0, 1)
     else this._passEncoder.setViewport(0, 0, this.canvas.width, this.canvas.height, 0, 1)
 
-    camera?.updateMatrix()
     scene.updateMatrix()
+    camera?.updateMatrix()
+    if (camera?.matrixAutoUpdate) camera.projectionViewMatrix.normalNDC()
 
     const renderList = this.sort(scene, camera)
     for (const node of renderList) {

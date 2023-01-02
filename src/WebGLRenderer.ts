@@ -485,6 +485,11 @@ export class WebGLRenderer {
   sort(scene: Object3D, camera?: Camera): Mesh[] {
     const renderList: Mesh[] = []
 
+    if (camera?.matrixAutoUpdate) {
+      camera.projectionViewMatrix.copy(camera.projectionMatrix).multiply(camera.viewMatrix)
+      camera.frustum.fromMatrix4(camera.projectionViewMatrix)
+    }
+
     scene.traverse((node) => {
       // Skip invisible nodes
       if (!node.visible) return true
@@ -520,8 +525,8 @@ export class WebGLRenderer {
   render(scene: Object3D, camera?: Camera): void {
     if (this.autoClear) this.clear()
 
-    camera?.updateMatrix()
     scene.updateMatrix()
+    camera?.updateMatrix()
 
     const renderList = this.sort(scene, camera)
     for (const node of renderList) {

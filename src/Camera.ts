@@ -25,11 +25,6 @@ export class Camera extends Object3D {
 
   updateMatrix(): void {
     super.updateMatrix()
-
-    if (this.matrixAutoUpdate) {
-      this.viewMatrix.copy(this.matrix).invert()
-      this.projectionViewMatrix.copy(this.projectionMatrix).multiply(this.viewMatrix)
-      this.frustum.fromMatrix4(this.projectionViewMatrix)
-    }
+    if (this.matrixAutoUpdate) this.viewMatrix.copy(this.matrix).invert()
   }
 }
