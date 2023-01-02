@@ -24,17 +24,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
-    },
-    "./webgpu": {
-      "types": "./dist/webgpu/index.d.ts",
-      "require": "./dist/webgpu/index.js",
-      "import": "./dist/webgpu/index.mjs"
-    }
+    "types": "./dist/index.d.ts",
+    "require": "./dist/index.js",
+    "import": "./dist/index.mjs"
   },
   "sideEffects": false,
   "devDependencies": {

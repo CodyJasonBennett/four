@@ -1,4 +1,4 @@
-import { WebGPURenderer, PerspectiveCamera, Geometry, Material, Mesh } from 'four/webgpu'
+import { WebGPURenderer, PerspectiveCamera, Geometry, Material, Mesh } from 'four'
 import { OrbitControls } from './utils/OrbitControls'
 
 const renderer = await new WebGPURenderer().init()

@@ -1,13 +1,13 @@
 /// <reference types="@webgpu/types" />
-import { Vector3 } from '../Vector3'
-import type { Camera } from '../Camera'
-import { Mesh, type Mode } from '../Mesh'
-import type { Object3D } from '../Object3D'
-import { type RenderTarget } from '../RenderTarget'
-import { Compiled } from '../_utils'
-import type { AttributeData, Geometry } from '../Geometry'
-import type { Material, Side, Uniform } from '../Material'
-import { Texture, type TextureWrapping } from '../Texture'
+import { Vector3 } from './Vector3'
+import type { Camera } from './Camera'
+import { Mesh, type Mode } from './Mesh'
+import type { Object3D } from './Object3D'
+import { type RenderTarget } from './RenderTarget'
+import { Compiled } from './_utils'
+import type { AttributeData, Geometry } from './Geometry'
+import type { Material, Side, Uniform } from './Material'
+import { Texture, type TextureWrapping } from './Texture'
 
 const GPU_CULL_SIDES: Record<Side, string> = {
   front: 'back',

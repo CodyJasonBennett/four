@@ -1,4 +1,4 @@
-import { WebGPURenderer, Geometry, Material, Mesh, Texture } from 'four/webgpu'
+import { WebGPURenderer, Geometry, Material, Mesh, Texture } from 'four'
 
 const renderer = await new WebGPURenderer().init()
 renderer.setSize(window.innerWidth, window.innerHeight)
