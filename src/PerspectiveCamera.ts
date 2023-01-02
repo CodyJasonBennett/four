@@ -19,7 +19,6 @@ export class PerspectiveCamera extends Camera {
 
   updateMatrix(): void {
     super.updateMatrix()
-
     if (this.matrixAutoUpdate) this.projectionMatrix.perspective(this.fov, this.aspect, this.near, this.far)
   }
 }

@@ -160,7 +160,7 @@ export interface WebGLRendererOptions {
 }
 
 /**
- * Constructs a renderer object. Can be extended to draw to a canvas.
+ * Constructs a WebGL renderer object. Can be extended to draw to a canvas.
  */
 export class WebGLRenderer {
   /**
@@ -208,7 +208,7 @@ export class WebGLRenderer {
   /**
    * Updates a texture with an optional `width` and `height`.
    */
-  updateTexture(texture: Texture, width = 0, height = 0): WebGLTexture {
+  private _updateTexture(texture: Texture, width = 0, height = 0): WebGLTexture {
     let target = this._textures.get(texture)!
     if (!target) {
       target = this.gl.createTexture()!
@@ -266,7 +266,7 @@ export class WebGLRenderer {
       let attachment = GL_COLOR_ATTACHMENT0
       for (const texture of renderTarget.textures) {
         attachments.push(attachment)
-        const target = this.updateTexture(texture, renderTarget.width, renderTarget.height)
+        const target = this._updateTexture(texture, renderTarget.width, renderTarget.height)
         this.gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, target, 0)
         attachment++
       }
@@ -336,14 +336,14 @@ export class WebGLRenderer {
   /**
    * Sets a {@link Uniform} outside of std140 for a {@link WebGLProgram} by name.
    */
-  setUniform(program: WebGLProgram, name: string, value: Uniform): void {
+  private _setUniform(program: WebGLProgram, name: string, value: Uniform): void {
     const location = this.gl.getUniformLocation(program, name)
     if (location === -1) return
 
     if (value instanceof Texture) {
       const index = this._textureIndex++
       this.gl.activeTexture(GL_TEXTURE0 + index)
-      this.updateTexture(value)
+      this._updateTexture(value)
       return this.gl.uniform1i(location, index)
     }
 
@@ -462,7 +462,7 @@ export class WebGLRenderer {
     }
 
     this._textureIndex = 0
-    for (const key in mesh.material.uniforms) this.setUniform(program, key, mesh.material.uniforms[key])
+    for (const key in mesh.material.uniforms) this._setUniform(program, key, mesh.material.uniforms[key])
 
     if (!compiled) {
       compiled = { program, VAO }
@@ -484,6 +484,11 @@ export class WebGLRenderer {
    */
   sort(scene: Object3D, camera?: Camera): Mesh[] {
     const renderList: Mesh[] = []
+
+    if (camera?.matrixAutoUpdate) {
+      camera.projectionViewMatrix.copy(camera.projectionMatrix).multiply(camera.viewMatrix)
+      camera.frustum.fromMatrix4(camera.projectionViewMatrix)
+    }
 
     scene.traverse((node) => {
       // Skip invisible nodes
@@ -520,8 +525,8 @@ export class WebGLRenderer {
   render(scene: Object3D, camera?: Camera): void {
     if (this.autoClear) this.clear()
 
-    camera?.updateMatrix()
     scene.updateMatrix()
+    camera?.updateMatrix()
 
     const renderList = this.sort(scene, camera)
     for (const node of renderList) {
