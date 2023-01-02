@@ -1,13 +1,13 @@
 /// <reference types="@webgpu/types" />
 import { Vector3 } from '../Vector3'
 import type { Camera } from '../Camera'
-import { Mesh, Mode } from '../Mesh'
+import { Mesh, type Mode } from '../Mesh'
 import type { Object3D } from '../Object3D'
-import type { RenderTarget } from '../RenderTarget'
+import { type RenderTarget } from '../RenderTarget'
 import { Compiled } from '../_utils'
-import { AttributeData, Geometry } from '../Geometry'
-import { Material, Side, Uniform } from '../Material'
-import { Texture } from '../Texture'
+import type { AttributeData, Geometry } from '../Geometry'
+import type { Material, Side, Uniform } from '../Material'
+import { Texture, type TextureWrapping } from '../Texture'
 
 const GPU_CULL_SIDES: Record<Side, string> = {
   front: 'back',
@@ -21,6 +21,12 @@ const GPU_DRAW_MODES: Record<Mode, string> = {
   triangles: 'triangle-list',
 } as const
 
+const GPU_TEXTURE_WRAPPINGS: Record<TextureWrapping, string> = {
+  clamp: 'clamp-to-edge',
+  repeat: 'repeat',
+  mirror: 'mirror-repeat',
+}
+
 // Pad to 16 byte chunks of 2, 4 (std140 layout)
 const pad2 = (n: number) => n + (n % 2)
 const pad4 = (n: number) => n + ((4 - (n % 4)) % 4)
@@ -28,8 +34,9 @@ const pad4 = (n: number) => n + ((4 - (n % 4)) % 4)
 /**
  * Packs uniforms into a std140 compliant array buffer.
  */
-const std140 = (uniforms: Uniform[], buffer?: Float32Array) => {
+function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
   const values = uniforms as Exclude<Uniform, Texture>[]
+
   // Init buffer
   if (!buffer) {
     const length = pad4(
@@ -40,6 +47,7 @@ const std140 = (uniforms: Uniform[], buffer?: Float32Array) => {
     )
     buffer = new Float32Array(length)
   }
+
   // Pack buffer
   let offset = 0
   for (const value of values) {
@@ -53,13 +61,14 @@ const std140 = (uniforms: Uniform[], buffer?: Float32Array) => {
       offset += pad(value.length)
     }
   }
+
   return buffer
 }
 
 /**
  * Returns a list of used uniforms from shader uniform structs.
  */
-const parseUniforms = (...shaders: string[]): string[] => {
+function parseUniforms(...shaders: string[]): string[] | undefined {
   // Filter to most complete definition
   if (shaders.length > 1) {
     const definitions = shaders.map((shader) => parseUniforms(shader))
@@ -70,12 +79,12 @@ const parseUniforms = (...shaders: string[]): string[] => {
   const shader = shaders[0].replace(/\/\*(?:[^*]|\**[^*/])*\*+\/|\/\/.*/g, '')
 
   // Bail if no uniforms defined
-  if (!shader.includes('uniform ') && !shader.includes('var<uniform>')) return []
+  if (!shader.includes('uniform ') && !shader.includes('var<uniform>')) return
 
   // Detect and parse shader layout
   const selector = shader.match(/var<uniform>[^;]+(?:\s|:)(\w+);/)?.[1] ?? 'uniform '
   const layout = shader.match(new RegExp(`${selector}[^\\{]+\\{([^\\}]+)\\}`))?.[1]
-  if (!layout) return []
+  if (!layout) return
 
   // Parse definitions
   const names = Array.from(layout.match(/\w+(?=[;:])/g)!)
@@ -104,13 +113,9 @@ export interface WebGPURendererOptions {
    */
   format: GPUTextureFormat
   /**
-   * Whether to enable antialiasing. Creates a multisampled rendertarget under the hood. Default is `true`.
-   */
-  antialias: boolean
-  /**
    * Whether to prioritize rendering performance or power efficiency.
    */
-  powerPreference: 'high-performance' | 'low-power'
+  powerPreference: GPUPowerPreference
   /**
    * Will fail device initialization if a feature is not met.
    */
@@ -145,6 +150,12 @@ export class WebGPURenderer {
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
+  private _textures = new Compiled<Texture, GPUTexture>()
+  private _samplers = new Compiled<GPUTexture, GPUSampler>()
+  private _FBOs = new Compiled<
+    RenderTarget,
+    { views: GPUTextureView[]; depthTexture: GPUTexture; depthTextureView: GPUTextureView }
+  >()
   private _depthTexture!: GPUTexture
   private _depthTextureView!: GPUTextureView
   private _commandEncoder!: GPUCommandEncoder
@@ -152,13 +163,12 @@ export class WebGPURenderer {
   private _renderTarget: RenderTarget | null = null
   private _v = new Vector3()
 
-  constructor({ canvas, context, format, device, antialias = true, ...params }: Partial<WebGPURendererOptions> = {}) {
+  constructor({ canvas, context, format, device, ...params }: Partial<WebGPURendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
     this.context = context ?? this.canvas.getContext('webgpu')!
     this.format = format ?? navigator.gpu.getPreferredCanvasFormat()
-
     this.device = device!
-    this._params = { antialias, ...params }
+    this._params = params
   }
 
   /**
@@ -185,6 +195,13 @@ export class WebGPURenderer {
       })
       this._depthTextureView = this._depthTexture.createView()
     }
+  }
+
+  /**
+   * Sets the current {@link RenderTarget} to render into.
+   */
+  setRenderTarget(renderTarget: RenderTarget | null): void {
+    this._renderTarget = renderTarget
   }
 
   /**
@@ -226,6 +243,51 @@ export class WebGPURenderer {
     this.device.queue.writeBuffer(buffer, dstByteOffset, data, srcByteOffset / size, byteLength / size)
   }
 
+  /**
+   * Updates a texture with an optional `width` and `height`.
+   */
+  private _updateTexture(
+    texture: Texture,
+    width = texture.image?.width ?? 0,
+    height = texture.image?.height ?? 0,
+  ): void {
+    let previous = this._textures.get(texture)
+    if (!previous || texture.needsUpdate) {
+      previous?.destroy()
+
+      const sampler = this.device.createSampler({
+        addressModeU: GPU_TEXTURE_WRAPPINGS[texture.wrapS] as GPUAddressMode,
+        addressModeV: GPU_TEXTURE_WRAPPINGS[texture.wrapT] as GPUAddressMode,
+        magFilter: texture.magFilter as GPUFilterMode,
+        minFilter: texture.minFilter as GPUFilterMode,
+        maxAnisotropy: texture.anisotropy,
+      })
+
+      const target = this.device.createTexture({
+        format: this.format,
+        dimension: '2d',
+        size: [width, height, 1],
+        usage:
+          GPUTextureUsage.COPY_DST |
+          GPUTextureUsage.TEXTURE_BINDING |
+          GPUTextureUsage.RENDER_ATTACHMENT |
+          GPUTextureUsage.COPY_SRC,
+      })
+
+      if (texture.image) {
+        this.device.queue.copyExternalImageToTexture({ source: texture.image }, { texture: target }, [width, height])
+      }
+
+      this._textures.set(texture, target, () => target.destroy())
+      this._samplers.set(target, sampler)
+
+      texture.needsUpdate = false
+    }
+  }
+
+  /**
+   * Compiles a mesh or program and sets initial uniforms.
+   */
   compile(mesh: Mesh, camera?: Camera): void {
     mesh.material.uniforms.modelMatrix = mesh.matrix
 
@@ -339,40 +401,59 @@ export class WebGPURenderer {
       this._geometry.set(mesh.geometry, true, () => {
         for (const key in mesh.geometry.attributes) {
           const attribute = mesh.geometry.attributes[key]
-          const buffer = this._buffers.get(attribute.data)!
-          buffer.destroy()
+          this._buffers.get(attribute.data)?.destroy()
           this._buffers.delete(attribute.data)
           attribute.needsUpdate = true
         }
       })
     }
 
-    let UBO = this._UBOs.get(mesh.material)
-    const uniforms = parseUniforms(mesh.material.vertex, mesh.material.fragment).map(
-      (key) => mesh.material.uniforms[key],
-    )
-    if (!UBO) {
-      const data = std140(uniforms)
-      const buffer = this._createBuffer(data, GPUBufferUsage.UNIFORM)
-      UBO = { data, buffer }
-      this._UBOs.set(mesh.material, UBO, () => buffer.destroy())
-    } else {
-      this._writeBuffer(UBO.buffer, std140(uniforms, UBO.data))
+    let binding = 0
+    const entries: GPUBindGroupEntry[] = []
+
+    const parsed = parseUniforms(mesh.material.vertex, mesh.material.fragment)
+    if (parsed) {
+      const uniforms = parsed.map((key) => mesh.material.uniforms[key])
+      let UBO = this._UBOs.get(mesh.material)
+      if (!UBO) {
+        const data = std140(uniforms)
+        const buffer = this._createBuffer(data, GPUBufferUsage.UNIFORM)
+        UBO = { data, buffer }
+        this._UBOs.set(mesh.material, UBO, () => buffer.destroy())
+      } else {
+        this._writeBuffer(UBO.buffer, std140(uniforms, UBO.data))
+      }
+
+      entries.push({ binding: binding++, resource: UBO })
     }
 
-    const entries: GPUBindGroupEntry[] = [{ binding: 0, resource: UBO! }]
-    const bindGroup = this.device.createBindGroup({
-      layout: pipeline.getBindGroupLayout(0),
-      entries,
-    })
-    this._passEncoder.setBindGroup(0, bindGroup)
-  }
+    for (const key in mesh.material.uniforms) {
+      const value = mesh.material.uniforms[key]
+      if (value instanceof Texture) {
+        this._updateTexture(value)
+        const target = this._textures.get(value)!
+        const sampler = this._samplers.get(target)!
 
-  /**
-   * Sets the current {@link RenderTarget} to render into.
-   */
-  setRenderTarget(renderTarget: RenderTarget | null): void {
-    this._renderTarget = renderTarget
+        entries.push(
+          {
+            binding: binding++,
+            resource: sampler,
+          },
+          {
+            binding: binding++,
+            resource: target.createView(),
+          },
+        )
+      }
+    }
+
+    if (entries.length) {
+      const bindGroup = this.device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries,
+      })
+      this._passEncoder.setBindGroup(0, bindGroup)
+    }
   }
 
   /**
@@ -414,11 +495,30 @@ export class WebGPURenderer {
    * Renders a scene of objects with an optional camera.
    */
   render(scene: Object3D, camera?: Camera): void {
-    camera?.updateMatrix()
-    scene.updateMatrix()
+    // Compile render target
+    let FBO = this._FBOs.get(this._renderTarget!)
+    if (this._renderTarget && (!FBO || this._renderTarget.needsUpdate)) {
+      FBO?.depthTexture.destroy()
 
-    const renderViews = [this.context.getCurrentTexture().createView()]
-    const depthView = this._depthTextureView
+      const views = this._renderTarget.textures.map((texture) => {
+        this._updateTexture(texture, this._renderTarget!.width, this._renderTarget!.height)
+        const target = this._textures.get(texture)!
+        return target.createView()
+      })
+
+      const depthTexture = this.device.createTexture({
+        size: [this._renderTarget.width, this._renderTarget.height, 1],
+        format: 'depth24plus-stencil8',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      })
+      const depthTextureView = depthTexture.createView()
+
+      FBO = { views, depthTexture, depthTextureView }
+      this._FBOs.set(this._renderTarget, FBO, () => depthTexture.destroy())
+    }
+
+    const renderViews = FBO?.views ?? [this.context.getCurrentTexture().createView()]
+    const depthView = FBO?.depthTextureView ?? this._depthTextureView
     const loadOp: GPULoadOp = this.autoClear ? 'clear' : 'load'
 
     this._commandEncoder = this.device.createCommandEncoder()
@@ -439,7 +539,12 @@ export class WebGPURenderer {
       },
     })
 
-    this._passEncoder.setViewport(0, 0, this.canvas.width, this.canvas.height, 0, 1)
+    if (this._renderTarget)
+      this._passEncoder.setViewport(0, 0, this._renderTarget.width, this._renderTarget.height, 0, 1)
+    else this._passEncoder.setViewport(0, 0, this.canvas.width, this.canvas.height, 0, 1)
+
+    camera?.updateMatrix()
+    scene.updateMatrix()
 
     const renderList = this.sort(scene, camera)
     for (const node of renderList) {
@@ -454,7 +559,7 @@ export class WebGPURenderer {
       }
     }
 
-    // Cleanup frame, submit GL commands
+    // Cleanup frame, submit GPU commands
     this._passEncoder.end()
     this.device.queue.submit([this._commandEncoder.finish()])
   }

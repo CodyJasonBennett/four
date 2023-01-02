@@ -1,7 +1,7 @@
 /**
  * Represents a texture image source.
  */
-export type ImageRepresentation = ImageBitmap | HTMLCanvasElement | ImageData | HTMLImageElement | HTMLVideoElement
+export type ImageRepresentation = ImageBitmap | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas
 
 /**
  * Represents a texture texel filter.
