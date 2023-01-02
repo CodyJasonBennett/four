@@ -160,7 +160,7 @@ export interface WebGLRendererOptions {
 }
 
 /**
- * Constructs a renderer object. Can be extended to draw to a canvas.
+ * Constructs a WebGL renderer object. Can be extended to draw to a canvas.
  */
 export class WebGLRenderer {
   /**
