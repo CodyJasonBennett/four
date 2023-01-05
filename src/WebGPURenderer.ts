@@ -97,19 +97,19 @@ function parseUniforms(...shaders: string[]): string[] | undefined {
  */
 export interface WebGPURendererOptions {
   /**
-   * An optional canvas element to draw to.
+   * An optional {@link HTMLCanvasElement} to draw to.
    */
   canvas: HTMLCanvasElement
   /**
-   * An optional WebGPU context to draw with.
+   * An optional {@link GPUCanvasContext} to draw with.
    */
   context: GPUCanvasContext
   /**
-   * An optional WebGPU device to request from.
+   * An optional {@link GPUDevice} to send GPU commands to.
    */
   device: GPUDevice
   /**
-   * An optional GPUFormat to create texture views with.
+   * An optional {@link GPUTextureFormat} to create texture views with.
    */
   format: GPUTextureFormat
   /**
@@ -134,16 +134,26 @@ export class WebGPURenderer {
    * Output {@link HTMLCanvasElement} to draw to.
    */
   readonly canvas: HTMLCanvasElement
+  /**
+   * Internal {@link GPUDevice} to send GPU commands to.
+   */
   public device!: GPUDevice
+  /**
+   * Internal {@link GPUTextureFormat} to create texture views with.
+   */
+  public format!: GPUTextureFormat
   /**
    * Internal {@link GPUCanvasContext} to draw with.
    */
   public context!: GPUCanvasContext
-  public format!: GPUTextureFormat
   /**
    * Whether to clear the drawing buffer between renders. Default is `true`.
    */
   public autoClear = true
+  /**
+   * Number of samples to use for MSAA rendering. Default is `4`
+   */
+  public samples = 4
 
   private _params: Partial<Omit<WebGPURendererOptions, 'canvas'>>
   private _buffers = new Compiled<Attribute, GPUBuffer>()
@@ -156,6 +166,8 @@ export class WebGPURenderer {
     RenderTarget,
     { views: GPUTextureView[]; depthTexture: GPUTexture; depthTextureView: GPUTextureView }
   >()
+  private _msaaTexture!: GPUTexture
+  private _msaaTextureView!: GPUTextureView
   private _depthTexture!: GPUTexture
   private _depthTextureView!: GPUTextureView
   private _commandEncoder!: GPUCommandEncoder
@@ -171,30 +183,45 @@ export class WebGPURenderer {
     this._params = params
   }
 
+  private _resizeSwapchain(): void {
+    if (!this.device) return
+
+    this.context.configure({
+      device: this.device,
+      format: this.format,
+      alphaMode: 'premultiplied',
+    })
+
+    const size = [this.canvas.width, this.canvas.height, 1]
+    const usage = GPUTextureUsage.RENDER_ATTACHMENT
+    const sampleCount = this.samples
+
+    if (this._msaaTexture) this._msaaTexture.destroy()
+    this._msaaTexture = this.device.createTexture({
+      format: this.format,
+      size,
+      usage,
+      sampleCount,
+    })
+    this._msaaTextureView = this._msaaTexture.createView()
+
+    if (this._depthTexture) this._depthTexture.destroy()
+    this._depthTexture = this.device.createTexture({
+      format: 'depth24plus-stencil8',
+      size,
+      usage,
+      sampleCount,
+    })
+    this._depthTextureView = this._depthTexture.createView()
+  }
+
   /**
    * Sets the canvas size.
    */
   setSize(width: number, height: number): void {
     this.canvas.width = width
     this.canvas.height = height
-
-    // Resize swap chain after init
-    if (this.device) {
-      this.context.configure({
-        device: this.device,
-        format: this.format,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        alphaMode: 'premultiplied',
-      })
-
-      if (this._depthTexture) this._depthTexture.destroy()
-      this._depthTexture = this.device.createTexture({
-        size: [width, height, 1],
-        format: 'depth24plus-stencil8',
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      })
-      this._depthTextureView = this._depthTexture.createView()
-    }
+    this._resizeSwapchain()
   }
 
   /**
@@ -213,8 +240,7 @@ export class WebGPURenderer {
       this.device = await adapter!.requestDevice(this._params)
     }
 
-    // Resize swapchain
-    this.setSize(this.canvas.width, this.canvas.height)
+    this._resizeSwapchain()
 
     return this
   }
@@ -327,6 +353,7 @@ export class WebGPURenderer {
     const depthCompare = (mesh.material.depthTest ? 'less' : 'always') as GPUCompareFunction
     const blending = mesh.material.blending
     const colorAttachments = this._renderTarget?.count ?? 1
+    const samples = this.samples
 
     const pipelineCacheKey = JSON.stringify([
       transparent,
@@ -337,6 +364,7 @@ export class WebGPURenderer {
       buffers,
       blending,
       colorAttachments,
+      samples,
     ])
 
     let pipeline = this._pipelines.get(mesh)
@@ -367,6 +395,7 @@ export class WebGPURenderer {
           depthCompare,
           format: 'depth24plus-stencil8',
         },
+        multisample: { count: samples },
         layout: 'auto',
       })
       this._pipelines.set(mesh, pipeline)
@@ -523,25 +552,32 @@ export class WebGPURenderer {
       this._FBOs.set(this._renderTarget, FBO, () => depthTexture.destroy())
     }
 
-    const renderViews = FBO?.views ?? [this.context.getCurrentTexture().createView()]
-    const depthView = FBO?.depthTextureView ?? this._depthTextureView
+    // FBOs don't support multisampling ATM due to the WebGL complexity
+    const samples = this.samples
+    if (FBO) this.samples = 1
+    else if (this._msaaTexture.sampleCount !== samples) this._resizeSwapchain()
+
+    const renderViews = FBO?.views ?? [this._msaaTextureView]
+    const resolveTarget = FBO ? undefined : this.context.getCurrentTexture().createView()
     const loadOp: GPULoadOp = this.autoClear ? 'clear' : 'load'
+    const storeOp: GPUStoreOp = 'store'
 
     this._commandEncoder = this.device.createCommandEncoder()
     this._passEncoder = this._commandEncoder.beginRenderPass({
       colorAttachments: renderViews.map<GPURenderPassColorAttachment>((view) => ({
         view,
+        resolveTarget,
         loadOp,
-        storeOp: 'store',
+        storeOp,
       })),
       depthStencilAttachment: {
-        view: depthView,
+        view: FBO?.depthTextureView ?? this._depthTextureView,
         depthClearValue: 1,
         depthLoadOp: loadOp,
-        depthStoreOp: 'store',
+        depthStoreOp: storeOp,
         stencilClearValue: 0,
         stencilLoadOp: loadOp,
-        stencilStoreOp: 'store',
+        stencilStoreOp: storeOp,
       },
     })
 
@@ -569,5 +605,7 @@ export class WebGPURenderer {
     // Cleanup frame, submit GPU commands
     this._passEncoder.end()
     this.device.queue.submit([this._commandEncoder.finish()])
+
+    if (FBO) this.samples = samples
   }
 }
