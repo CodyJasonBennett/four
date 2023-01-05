@@ -5,7 +5,7 @@ import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import { type RenderTarget } from './RenderTarget'
 import { Compiled } from './_utils'
-import type { AttributeData, Geometry } from './Geometry'
+import type { Attribute, AttributeData, Geometry } from './Geometry'
 import type { Material, Side, Uniform } from './Material'
 import { Texture, type TextureWrapping } from './Texture'
 
@@ -146,7 +146,7 @@ export class WebGPURenderer {
   public autoClear = true
 
   private _params: Partial<Omit<WebGPURendererOptions, 'canvas'>>
-  private _buffers = new Compiled<AttributeData, GPUBuffer>()
+  private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
@@ -378,10 +378,10 @@ export class WebGPURenderer {
       const attribute = mesh.geometry.attributes[key]
       const isIndex = key === 'index'
 
-      let buffer = this._buffers.get(attribute.data)
+      let buffer = this._buffers.get(attribute)
       if (!buffer) {
         buffer = this._createBuffer(attribute.data, GPUBufferUsage[isIndex ? 'INDEX' : 'VERTEX'])
-        this._buffers.set(attribute.data, buffer)
+        this._buffers.set(attribute, buffer)
         attribute.needsUpdate = false
       }
 
@@ -401,8 +401,8 @@ export class WebGPURenderer {
       this._geometry.set(mesh.geometry, true, () => {
         for (const key in mesh.geometry.attributes) {
           const attribute = mesh.geometry.attributes[key]
-          this._buffers.get(attribute.data)?.destroy()
-          this._buffers.delete(attribute.data)
+          this._buffers.get(attribute)?.destroy()
+          this._buffers.delete(attribute)
           attribute.needsUpdate = true
         }
       })
