@@ -27,6 +27,18 @@ const GPU_TEXTURE_WRAPPINGS: Record<TextureWrapping, string> = {
   mirror: 'mirror-repeat',
 }
 
+const GPU_BUFFER_USAGE_COPY_DST = 0x8
+const GPU_BUFFER_USAGE_INDEX = 0x10
+const GPU_BUFFER_USAGE_VERTEX = 0x20
+const GPU_BUFFER_USAGE_UNIFORM = 0x40
+
+const GPU_TEXTURE_USAGE_COPY_SRC = 0x1
+const GPU_TEXTURE_USAGE_COPY_DST = 0x2
+const GPU_TEXTURE_USAGE_TEXTURE_BINDING = 0x4
+const GPU_TEXTURE_USAGE_RENDER_ATTACHMENT = 0x10
+
+const GPU_COLOR_WRITE_ALL = 0xf
+
 // Pad to 16 byte chunks of 2, 4 (std140 layout)
 const pad2 = (n: number) => n + (n % 2)
 const pad4 = (n: number) => n + ((4 - (n % 4)) % 4)
@@ -193,7 +205,7 @@ export class WebGPURenderer {
     })
 
     const size = [this.canvas.width, this.canvas.height, 1]
-    const usage = GPUTextureUsage.RENDER_ATTACHMENT
+    const usage = GPU_TEXTURE_USAGE_RENDER_ATTACHMENT
     const sampleCount = this.samples
 
     if (this._msaaTexture) this._msaaTexture.destroy()
@@ -248,7 +260,7 @@ export class WebGPURenderer {
   private _createBuffer(data: AttributeData, usage: GPUBufferUsageFlags): GPUBuffer {
     const buffer = this.device.createBuffer({
       size: data.byteLength,
-      usage: usage | GPUBufferUsage.COPY_DST,
+      usage: usage | GPU_BUFFER_USAGE_COPY_DST,
       mappedAtCreation: true,
     })
 
@@ -294,10 +306,10 @@ export class WebGPURenderer {
         dimension: '2d',
         size: [width, height, 1],
         usage:
-          GPUTextureUsage.COPY_DST |
-          GPUTextureUsage.TEXTURE_BINDING |
-          GPUTextureUsage.RENDER_ATTACHMENT |
-          GPUTextureUsage.COPY_SRC,
+          GPU_TEXTURE_USAGE_COPY_DST |
+          GPU_TEXTURE_USAGE_TEXTURE_BINDING |
+          GPU_TEXTURE_USAGE_RENDER_ATTACHMENT |
+          GPU_TEXTURE_USAGE_COPY_SRC,
       })
 
       if (texture.image) {
@@ -382,7 +394,7 @@ export class WebGPURenderer {
           targets: Array<GPUColorTargetState>(colorAttachments).fill({
             format: this.format,
             blend: mesh.material.blending,
-            writeMask: GPUColorWrite.ALL,
+            writeMask: GPU_COLOR_WRITE_ALL,
           }),
         },
         primitive: {
@@ -409,7 +421,7 @@ export class WebGPURenderer {
 
       let buffer = this._buffers.get(attribute)
       if (!buffer) {
-        buffer = this._createBuffer(attribute.data, GPUBufferUsage[isIndex ? 'INDEX' : 'VERTEX'])
+        buffer = this._createBuffer(attribute.data, isIndex ? GPU_BUFFER_USAGE_INDEX : GPU_BUFFER_USAGE_VERTEX)
         this._buffers.set(attribute, buffer)
         attribute.needsUpdate = false
       }
@@ -446,7 +458,7 @@ export class WebGPURenderer {
       let UBO = this._UBOs.get(mesh.material)
       if (!UBO) {
         const data = std140(uniforms)
-        const buffer = this._createBuffer(data, GPUBufferUsage.UNIFORM)
+        const buffer = this._createBuffer(data, GPU_BUFFER_USAGE_UNIFORM)
         UBO = { data, buffer }
         this._UBOs.set(mesh.material, UBO, () => buffer.destroy())
       } else {
@@ -544,7 +556,7 @@ export class WebGPURenderer {
       const depthTexture = this.device.createTexture({
         size: [this._renderTarget.width, this._renderTarget.height, 1],
         format: 'depth24plus-stencil8',
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        usage: GPU_TEXTURE_USAGE_RENDER_ATTACHMENT,
       })
       const depthTextureView = depthTexture.createView()
 
