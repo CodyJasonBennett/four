@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <title>four - three.js in 4KB</title>
     <style>
       body {
@@ -16,7 +16,7 @@
   </head>
   <body>
     <script type="module">
-      for (const module of Object.values(import.meta.glob('./src/*.ts'))) await module()
+      for (const module of Object.values(import.meta.glob('./*.ts'))) await module()
     </script>
   </body>
 </html>
