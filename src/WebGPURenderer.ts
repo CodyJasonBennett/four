@@ -607,11 +607,9 @@ export class WebGPURenderer {
 
       // Alternate drawing for indexed and non-indexed children
       const { index, position } = node.geometry.attributes
-      if (index) {
-        this._passEncoder.drawIndexed(index.data.length / index.size, node.instances)
-      } else {
-        this._passEncoder.draw(position.data.length / position.size, node.instances)
-      }
+      if (index) this._passEncoder.drawIndexed(index.data.length / index.size, node.instances)
+      else if (position) this._passEncoder.draw(position.data.length / position.size, node.instances)
+      else this._passEncoder.draw(3, node.instances)
     }
 
     // Cleanup frame, submit GPU commands
