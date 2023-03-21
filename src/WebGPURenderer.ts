@@ -333,7 +333,7 @@ export class WebGPURenderer {
       texture.needsUpdate = false
     }
 
-    if (texture.sampler) this._updateSampler(texture.sampler)
+    this._updateSampler(texture.sampler)
 
     return target
   }
@@ -488,7 +488,7 @@ export class WebGPURenderer {
       if (value instanceof Texture) {
         this._updateTexture(value)
 
-        const sampler = this._samplers.get(value.sampler!)
+        const sampler = this._samplers.get(value.sampler)
         if (sampler) entries.push({ binding: binding++, resource: sampler })
 
         const target = this._textures.get(value)!

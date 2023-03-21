@@ -264,7 +264,7 @@ export class WebGLRenderer {
       texture.needsUpdate = false
     }
 
-    if (texture.sampler?.needsUpdate) this._updateSampler(texture.sampler)
+    this._updateSampler(texture.sampler)
 
     return target
   }
@@ -366,7 +366,7 @@ export class WebGLRenderer {
     if (value instanceof Texture) {
       const index = this._textureIndex++
       this.gl.activeTexture(GL_TEXTURE0 + index)
-      const sampler = this._samplers.get(value.sampler!)
+      const sampler = this._samplers.get(value.sampler)
       if (sampler) this.gl.bindSampler(index, sampler)
       this._updateTexture(value)
       return this.gl.uniform1i(location, index)

@@ -1,4 +1,4 @@
-import type { Sampler } from './Sampler'
+import { Sampler } from './Sampler'
 
 /**
  * Represents a texture image source.
@@ -36,7 +36,7 @@ export interface TextureOptions {
  */
 export class Texture {
   public image?: ImageRepresentation
-  public sampler?: Sampler
+  public sampler = new Sampler()
   public format?: number
   public type?: number
   public needsUpdate = true
