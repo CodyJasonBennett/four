@@ -76,11 +76,15 @@ export interface MaterialOptions {
   /**
    * Stringified vertex shader code.
    */
-  vertex: string
+  vertex?: string
   /**
    * Stringified fragment shader code.
    */
-  fragment: string
+  fragment?: string
+  /**
+   * Stringified compute shader code.
+   */
+  compute?: string
   /**
    * Which face {@link Side} should be rendered. Default is `front`.
    */
@@ -105,8 +109,9 @@ export interface MaterialOptions {
 
 export class Material implements MaterialOptions {
   readonly uniforms: Record<string, Uniform> = {}
-  readonly vertex!: string
-  readonly fragment!: string
+  public vertex!: string
+  public fragment!: string
+  public compute?: string
   public side: Side = 'front'
   public transparent = false
   public depthTest = true

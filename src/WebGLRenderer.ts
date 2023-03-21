@@ -101,6 +101,11 @@ const GL_BLEND_OPERATIONS: Record<BlendOperation, number> = {
 } as const
 
 /**
+ * Matches against GLSL shader outputs.
+ */
+const VARYING_REGEX = /[^\w](?:varying|out)\s+\w+\s+(\w+)\s*;/g
+
+/**
  * Represents WebGL compiled {@link Mesh} state.
  */
 export interface WebGLCompiled {
@@ -183,6 +188,7 @@ export class WebGLRenderer {
   private _textures = new Compiled<Texture, WebGLTexture>()
   private _samplers = new Compiled<Sampler, WebGLSampler>()
   private _FBOs = new Compiled<RenderTarget, WebGLFramebuffer>()
+  private _transformFeedback?: WebGLTransformFeedback
   private _textureIndex = 0
   private _v = new Vector3()
 
@@ -411,12 +417,12 @@ export class WebGLRenderer {
       this._programs.set(mesh.material, program, () => this.gl.deleteProgram(program!))
 
       const vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
-      this.gl.shaderSource(vertexShader, mesh.material.vertex)
+      this.gl.shaderSource(vertexShader, mesh.material.vertex ?? mesh.material.compute)
       this.gl.compileShader(vertexShader)
       this.gl.attachShader(program, vertexShader)
 
       const fragmentShader = this.gl.createShader(GL_FRAGMENT_SHADER)!
-      this.gl.shaderSource(fragmentShader, mesh.material.fragment)
+      this.gl.shaderSource(fragmentShader, mesh.material.fragment ?? '#version 300 es\nvoid main(){}')
       this.gl.compileShader(fragmentShader)
       this.gl.attachShader(program, fragmentShader)
 
@@ -567,6 +573,50 @@ export class WebGLRenderer {
       if (index) this.gl.drawElementsInstanced(mode, index.data.length / index.size, GL_UNSIGNED_INT, 0, node.instances)
       else if (position) this.gl.drawArraysInstanced(mode, 0, position.data.length / position.size, node.instances)
       else this.gl.drawArraysInstanced(mode, 0, 3, node.instances)
+    }
+  }
+
+  compute(node: Mesh): void {
+    const compiled = this.compile(node)
+    this.gl.bindVertexArray(null)
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null)
+
+    const transformFeedback = (this._transformFeedback ??= this.gl.createTransformFeedback()!)
+    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, transformFeedback)
+
+    let length = 0
+    const outputs: string[] = []
+    for (const [, output] of node.material.compute!.matchAll(VARYING_REGEX)) {
+      const attribute = node.geometry.attributes[output]
+      const buffer = this._buffers.get(attribute)!
+      this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, outputs.length, buffer)
+      length = Math.max(length, attribute.data.length / attribute.size)
+      outputs.push(output)
+    }
+    this.gl.transformFeedbackVaryings(compiled.program, outputs, this.gl.SEPARATE_ATTRIBS)
+    this.gl.linkProgram(compiled.program)
+
+    const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
+
+    this.gl.enable(this.gl.RASTERIZER_DISCARD)
+    this.gl.beginTransformFeedback(mode)
+    this.gl.bindVertexArray(compiled.VAO)
+
+    if (length) this.gl.drawArraysInstanced(mode, 0, length, node.instances)
+    else this.gl.drawArraysInstanced(mode, 0, node.instances, 1)
+
+    this.gl.bindVertexArray(null)
+    this.gl.endTransformFeedback()
+    this.gl.disable(this.gl.RASTERIZER_DISCARD)
+    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, null)
+
+    for (const output of outputs) {
+      const attribute = node.geometry.attributes[output]
+      const buffer = this._buffers.get(attribute)!
+
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer)
+      this.gl.getBufferSubData(this.gl.ARRAY_BUFFER, 0, attribute.data)
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null)
     }
   }
 }
