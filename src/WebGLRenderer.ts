@@ -37,6 +37,11 @@ const GL_LESS = 0x0201
 const GL_FRONT = 0x0404
 const GL_BACK = 0x0405
 const GL_TEXTURE0 = 0x84c0
+const GL_POINTS = 0x0000
+const GL_TRANSFORM_FEEDBACK = 0x8e22
+const GL_TRANSFORM_FEEDBACK_BUFFER = 0x8c8e
+const GL_SEPARATE_ATTRIBS = 0x8c8d
+const GL_RASTERIZER_DISCARD = 0x8c89
 
 const GL_NEAREST = 0x2600
 const GL_LINEAR = 0x2601
@@ -579,26 +584,26 @@ export class WebGLRenderer {
   compute(node: Mesh): void {
     const compiled = this.compile(node)
     this.gl.bindVertexArray(null)
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null)
+    this.gl.bindBuffer(GL_ARRAY_BUFFER, null)
 
     const transformFeedback = (this._transformFeedback ??= this.gl.createTransformFeedback()!)
-    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, transformFeedback)
+    this.gl.bindTransformFeedback(GL_TRANSFORM_FEEDBACK, transformFeedback)
 
     let length = 0
     const outputs: string[] = []
     for (const [, output] of node.material.compute!.matchAll(VARYING_REGEX)) {
       const attribute = node.geometry.attributes[output]
       const buffer = this._buffers.get(attribute)!
-      this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, outputs.length, buffer)
+      this.gl.bindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, outputs.length, buffer)
       length = Math.max(length, attribute.data.length / attribute.size)
       outputs.push(output)
     }
-    this.gl.transformFeedbackVaryings(compiled.program, outputs, this.gl.SEPARATE_ATTRIBS)
+    this.gl.transformFeedbackVaryings(compiled.program, outputs, GL_SEPARATE_ATTRIBS)
     this.gl.linkProgram(compiled.program)
 
-    const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
+    const mode = GL_POINTS
 
-    this.gl.enable(this.gl.RASTERIZER_DISCARD)
+    this.gl.enable(GL_RASTERIZER_DISCARD)
     this.gl.beginTransformFeedback(mode)
     this.gl.bindVertexArray(compiled.VAO)
 
@@ -607,16 +612,16 @@ export class WebGLRenderer {
 
     this.gl.bindVertexArray(null)
     this.gl.endTransformFeedback()
-    this.gl.disable(this.gl.RASTERIZER_DISCARD)
-    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, null)
+    this.gl.disable(GL_RASTERIZER_DISCARD)
+    this.gl.bindTransformFeedback(GL_TRANSFORM_FEEDBACK, null)
 
     for (const output of outputs) {
       const attribute = node.geometry.attributes[output]
       const buffer = this._buffers.get(attribute)!
 
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer)
-      this.gl.getBufferSubData(this.gl.ARRAY_BUFFER, 0, attribute.data)
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null)
+      this.gl.bindBuffer(GL_ARRAY_BUFFER, buffer)
+      this.gl.getBufferSubData(GL_ARRAY_BUFFER, 0, attribute.data)
+      this.gl.bindBuffer(GL_ARRAY_BUFFER, null)
     }
   }
 }
