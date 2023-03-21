@@ -7,7 +7,8 @@ import { type RenderTarget } from './RenderTarget'
 import { Compiled } from './_utils'
 import type { Attribute, AttributeData, Geometry } from './Geometry'
 import type { Material, Side, Uniform } from './Material'
-import { Texture, type TextureWrapping } from './Texture'
+import { Texture } from './Texture'
+import type { Wrapping, Sampler } from './Sampler'
 
 const GPU_CULL_SIDES: Record<Side, string> = {
   front: 'back',
@@ -21,7 +22,7 @@ const GPU_DRAW_MODES: Record<Mode, string> = {
   triangles: 'triangle-list',
 } as const
 
-const GPU_TEXTURE_WRAPPINGS: Record<TextureWrapping, string> = {
+const GPU_WRAPPING: Record<Wrapping, string> = {
   clamp: 'clamp-to-edge',
   repeat: 'repeat',
   mirror: 'mirror-repeat',
@@ -173,7 +174,7 @@ export class WebGPURenderer {
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
   private _textures = new Compiled<Texture, GPUTexture>()
-  private _samplers = new Compiled<GPUTexture, GPUSampler>()
+  private _samplers = new Compiled<Sampler, GPUSampler>()
   private _FBOs = new Compiled<
     RenderTarget,
     { views: GPUTextureView[]; depthTexture: GPUTexture; depthTextureView: GPUTextureView }
@@ -282,26 +283,37 @@ export class WebGPURenderer {
   }
 
   /**
+   * Updates sampler parameters.
+   */
+  private _updateSampler(sampler: Sampler): GPUSampler {
+    let target = this._samplers.get(sampler)
+    if (!target || sampler.needsUpdate) {
+      target = this.device.createSampler({
+        addressModeU: GPU_WRAPPING[sampler.wrapS] as GPUAddressMode,
+        addressModeV: GPU_WRAPPING[sampler.wrapT] as GPUAddressMode,
+        magFilter: sampler.magFilter as GPUFilterMode,
+        minFilter: sampler.minFilter as GPUFilterMode,
+        maxAnisotropy: sampler.anisotropy,
+      })
+      this._samplers.set(sampler, target)
+    }
+
+    return target
+  }
+
+  /**
    * Updates a texture with an optional `width` and `height`.
    */
   private _updateTexture(
     texture: Texture,
     width = texture.image?.width ?? 0,
     height = texture.image?.height ?? 0,
-  ): void {
-    let previous = this._textures.get(texture)
-    if (!previous || texture.needsUpdate) {
-      previous?.destroy()
+  ): GPUTexture {
+    let target = this._textures.get(texture)
+    if (!target || texture.needsUpdate) {
+      target?.destroy()
 
-      const sampler = this.device.createSampler({
-        addressModeU: GPU_TEXTURE_WRAPPINGS[texture.wrapS] as GPUAddressMode,
-        addressModeV: GPU_TEXTURE_WRAPPINGS[texture.wrapT] as GPUAddressMode,
-        magFilter: texture.magFilter as GPUFilterMode,
-        minFilter: texture.minFilter as GPUFilterMode,
-        maxAnisotropy: texture.anisotropy,
-      })
-
-      const target = this.device.createTexture({
+      target = this.device.createTexture({
         format: this.format,
         dimension: '2d',
         size: [width, height, 1],
@@ -316,11 +328,14 @@ export class WebGPURenderer {
         this.device.queue.copyExternalImageToTexture({ source: texture.image }, { texture: target }, [width, height])
       }
 
-      this._textures.set(texture, target, () => target.destroy())
-      this._samplers.set(target, sampler)
+      this._textures.set(texture, target, () => target!.destroy())
 
       texture.needsUpdate = false
     }
+
+    if (texture.sampler) this._updateSampler(texture.sampler)
+
+    return target
   }
 
   /**
@@ -472,19 +487,12 @@ export class WebGPURenderer {
       const value = mesh.material.uniforms[key]
       if (value instanceof Texture) {
         this._updateTexture(value)
-        const target = this._textures.get(value)!
-        const sampler = this._samplers.get(target)!
 
-        entries.push(
-          {
-            binding: binding++,
-            resource: sampler,
-          },
-          {
-            binding: binding++,
-            resource: target.createView(),
-          },
-        )
+        const sampler = this._samplers.get(value.sampler!)
+        if (sampler) entries.push({ binding: binding++, resource: sampler })
+
+        const target = this._textures.get(value)!
+        entries.push({ binding: binding++, resource: target.createView() })
       }
     }
 

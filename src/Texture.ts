@@ -1,20 +1,12 @@
+import type { Sampler } from './Sampler'
+
 /**
  * Represents a texture image source.
  */
 export type ImageRepresentation = ImageBitmap | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas
 
 /**
- * Represents a texture texel filter.
- */
-export type TextureFilter = 'nearest' | 'linear'
-
-/**
- * Represents a texture wrapping mode.
- */
-export type TextureWrapping = 'clamp' | 'repeat' | 'mirror'
-
-/**
- * Texture constructor parameters. Accepts an image source and various filtering options.
+ * Texture constructor parameters. Accepts an image source and various data options.
  */
 export interface TextureOptions {
   /**
@@ -22,25 +14,9 @@ export interface TextureOptions {
    */
   image: ImageRepresentation
   /**
-   * How to sample when a texel is more than 1 pixel. Default is `nearest`.
+   * An optional sampler object to configure texel filtering and transforms.
    */
-  magFilter: TextureFilter
-  /**
-   * How to sample when a texel is less than 1 pixel. Default is `nearest`.
-   */
-  minFilter: TextureFilter
-  /**
-   * Horizontal UV wrapping. Default is `clamp`.
-   */
-  wrapS: TextureWrapping
-  /**
-   * Vertical UV wrapping. Default is `clamp`.
-   */
-  wrapT: TextureWrapping
-  /**
-   * Number of samples for anisotropic filtering. Eliminates aliasing at oblique angles. Default is `1`.
-   */
-  anisotropy: number
+  sampler: Sampler
   /**
    * Internal texture format. Default is `GL_RGBA`.
    */
@@ -50,7 +26,7 @@ export interface TextureOptions {
    */
   type: number
   /**
-   * Flags the texture for update. Default is `true`.
+   * Flags this texture for update. Default is `true`.
    */
   needsUpdate: boolean
 }
@@ -60,11 +36,7 @@ export interface TextureOptions {
  */
 export class Texture {
   public image?: ImageRepresentation
-  public magFilter: TextureFilter = 'nearest'
-  public minFilter: TextureFilter = 'nearest'
-  public wrapS: TextureWrapping = 'clamp'
-  public wrapT: TextureWrapping = 'clamp'
-  public anisotropy = 1
+  public sampler?: Sampler
   public format?: number
   public type?: number
   public needsUpdate = true

@@ -5,7 +5,8 @@ import type { BlendFactor, BlendOperation, Side, Blending, Uniform, Material } f
 import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import type { RenderTarget } from './RenderTarget'
-import { Texture, type TextureFilter, type TextureWrapping } from './Texture'
+import { Texture } from './Texture'
+import type { Filter, Wrapping, Sampler } from './Sampler'
 import { min, max, floor, Compiled } from './_utils'
 
 const GL_FRAMEBUFFER = 0x8d40
@@ -40,7 +41,7 @@ const GL_TEXTURE0 = 0x84c0
 const GL_NEAREST = 0x2600
 const GL_LINEAR = 0x2601
 
-const GL_TEXTURE_FILTERS: Record<TextureFilter, number> = {
+const GL_FILTERS: Record<Filter, number> = {
   nearest: GL_NEAREST,
   linear: GL_LINEAR,
 } as const
@@ -49,7 +50,7 @@ const GL_REPEAT = 0x2901
 const GL_CLAMP_TO_EDGE = 0x812f
 const GL_MIRRORED_REPEAT = 0x8370
 
-const GL_TEXTURE_WRAPPINGS: Record<TextureWrapping, number> = {
+const GL_WRAPPINGS: Record<Wrapping, number> = {
   repeat: GL_REPEAT,
   clamp: GL_CLAMP_TO_EDGE,
   mirror: GL_MIRRORED_REPEAT,
@@ -180,6 +181,7 @@ export class WebGLRenderer {
   private _VAOs = new Compiled<Geometry, WebGLVertexArrayObject>()
   private _buffers = new Compiled<Attribute, WebGLBuffer>()
   private _textures = new Compiled<Texture, WebGLTexture>()
+  private _samplers = new Compiled<Sampler, WebGLSampler>()
   private _FBOs = new Compiled<RenderTarget, WebGLFramebuffer>()
   private _textureIndex = 0
   private _v = new Vector3()
@@ -206,6 +208,36 @@ export class WebGLRenderer {
   }
 
   /**
+   * Updates sampler parameters.
+   */
+  private _updateSampler(sampler: Sampler): WebGLSampler {
+    let target = this._samplers.get(sampler)!
+    if (!target) {
+      target = this.gl.createSampler()!
+      this._samplers.set(sampler, target)
+      sampler.needsUpdate = true
+    }
+
+    if (sampler.needsUpdate) {
+      if (sampler.anisotropy) {
+        const anisotropyExt = this.gl.getExtension('EXT_texture_filter_anisotropic')
+        if (anisotropyExt)
+          this.gl.samplerParameteri(target, anisotropyExt.TEXTURE_MAX_ANISOTROPY_EXT, sampler.anisotropy)
+      }
+
+      this.gl.samplerParameteri(target, GL_TEXTURE_MAG_FILTER, GL_FILTERS[sampler.magFilter])
+      this.gl.samplerParameteri(target, GL_TEXTURE_MIN_FILTER, GL_FILTERS[sampler.minFilter])
+
+      this.gl.samplerParameteri(target, GL_TEXTURE_WRAP_S, GL_WRAPPINGS[sampler.wrapS])
+      this.gl.samplerParameteri(target, GL_TEXTURE_WRAP_T, GL_WRAPPINGS[sampler.wrapT])
+
+      sampler.needsUpdate = false
+    }
+
+    return target
+  }
+
+  /**
    * Updates a texture with an optional `width` and `height`.
    */
   private _updateTexture(texture: Texture, width = 0, height = 0): WebGLTexture {
@@ -229,19 +261,10 @@ export class WebGLRenderer {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, null)
       }
 
-      if (texture.anisotropy) {
-        const anisotropyExt = this.gl.getExtension('EXT_texture_filter_anisotropic')
-        if (anisotropyExt)
-          this.gl.texParameterf(GL_TEXTURE_2D, anisotropyExt.TEXTURE_MAX_ANISOTROPY_EXT, texture.anisotropy)
-      }
-      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_FILTERS[texture.magFilter])
-      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_FILTERS[texture.minFilter])
-
-      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAPPINGS[texture.wrapS])
-      this.gl.texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAPPINGS[texture.wrapT])
-
       texture.needsUpdate = false
     }
+
+    if (texture.sampler?.needsUpdate) this._updateSampler(texture.sampler)
 
     return target
   }
@@ -343,6 +366,8 @@ export class WebGLRenderer {
     if (value instanceof Texture) {
       const index = this._textureIndex++
       this.gl.activeTexture(GL_TEXTURE0 + index)
+      const sampler = this._samplers.get(value.sampler!)
+      if (sampler) this.gl.bindSampler(index, sampler)
       this._updateTexture(value)
       return this.gl.uniform1i(location, index)
     }
