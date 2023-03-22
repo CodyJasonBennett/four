@@ -173,6 +173,7 @@ export class WebGPURenderer {
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
+  private _compute = new Compiled<Mesh, GPUComputePipeline>()
   private _textures = new Compiled<Texture, GPUTexture>()
   private _samplers = new Compiled<Sampler, GPUSampler>()
   private _FBOs = new Compiled<
@@ -625,5 +626,27 @@ export class WebGPURenderer {
     this.device.queue.submit([this._commandEncoder.finish()])
 
     if (FBO) this.samples = samples
+  }
+
+  compute(node: Mesh): void {
+    let pipeline = this._compute.get(node)
+    if (!pipeline) {
+      pipeline = this.device.createComputePipeline({
+        compute: {
+          module: this.device.createShaderModule({ code: node.material.compute! }),
+          entryPoint: 'main',
+        },
+        layout: 'auto',
+      })
+      this._compute.set(node, pipeline)
+    }
+
+    const commandEncoder = this.device.createCommandEncoder()
+    const passEncoder = commandEncoder.beginComputePass()
+    passEncoder.setPipeline(pipeline)
+    // passEncoder.setBindGroup(0, null!)
+    passEncoder.dispatchWorkgroups(64)
+    passEncoder.end()
+    this.device.queue.submit([commandEncoder.finish()])
   }
 }
