@@ -12,19 +12,17 @@ const geometry = new Geometry({
 const computeMaterial = new Material({
   compute: /* wgsl */ `
     @group(0) @binding(0)
-    var<storage, read_write> position: array<f32>;
+    var<storage, read_write> position: array<vec2<f32>>;
 
     @group(0) @binding(1)
-    var<storage, read_write> uv: array<f32>;
+    var<storage, read_write> uv: array<vec2<f32>>;
 
     const vertex = array<vec2<f32>, 3>(vec2(-1), vec2(3, -1), vec2(-1, 3));
 
     @compute @workgroup_size(64)
     fn main(@builtin(local_invocation_index) i: u32) {
-      position[i] = vertex[i].x;
-      position[i + 1] = vertex[i].y;
-      uv[i] = abs(vertex[i]).x - 1.0;
-      uv[i + 1] = abs(vertex[i]).y - 1.0;
+      position[i] = vertex[i];
+      uv[i] = abs(vertex[i]) - 1.0;
     }
   `,
 })
