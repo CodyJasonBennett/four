@@ -268,7 +268,7 @@ export class WebGPURenderer {
   private _createBuffer(data: AttributeData, usage: GPUBufferUsageFlags): GPUBuffer {
     const buffer = this.device.createBuffer({
       size: data.byteLength,
-      usage: usage | GPU_BUFFER_USAGE_COPY_DST,
+      usage: usage | GPU_BUFFER_USAGE_COPY_DST | GPU_BUFFER_USAGE_STORAGE,
       mappedAtCreation: true,
     })
 
@@ -651,7 +651,7 @@ export class WebGPURenderer {
       const attribute = node.geometry.attributes[key]
       let buffer = this._buffers.get(attribute)
       if (!buffer) {
-        buffer = this._createBuffer(attribute.data, GPU_BUFFER_USAGE_VERTEX | GPU_BUFFER_USAGE_STORAGE)
+        buffer = this._createBuffer(attribute.data, GPU_BUFFER_USAGE_VERTEX)
         this._buffers.set(attribute, buffer)
       }
       if (attribute.needsUpdate) this._writeBuffer(buffer, attribute.data)
