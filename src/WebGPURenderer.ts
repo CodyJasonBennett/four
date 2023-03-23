@@ -178,8 +178,7 @@ export class WebGPURenderer {
   private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
-  private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
-  private _compute = new Compiled<Mesh, GPUComputePipeline>()
+  private _pipelines = new Compiled<Mesh, GPURenderPipeline | GPUComputePipeline>()
   private _textures = new Compiled<Texture, GPUTexture>()
   private _samplers = new Compiled<Sampler, GPUSampler>()
   private _FBOs = new Compiled<
@@ -193,7 +192,7 @@ export class WebGPURenderer {
   private _commandEncoder!: GPUCommandEncoder
   private _passEncoder!: GPURenderPassEncoder
   private _renderTarget: RenderTarget | null = null
-  private _v = new Vector3()
+  private _vec3 = new Vector3()
 
   constructor({ canvas, context, format, device, ...params }: Partial<WebGPURendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
@@ -401,7 +400,7 @@ export class WebGPURenderer {
       samples,
     ])
 
-    let pipeline = this._pipelines.get(mesh)
+    let pipeline = this._pipelines.get(mesh) as GPURenderPipeline | undefined
     if (!pipeline || pipeline.label !== pipelineCacheKey) {
       pipeline = this.device.createRenderPipeline({
         label: pipelineCacheKey,
@@ -540,8 +539,8 @@ export class WebGPURenderer {
         (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
         // Depth sort with a camera if able
         (!!camera &&
-          this._v.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
-            this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
+          this._vec3.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
+            this._vec3.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
         // Reverse painter's sort transparent
         (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
     )
@@ -629,7 +628,7 @@ export class WebGPURenderer {
   }
 
   compute(node: Mesh): void {
-    let pipeline = this._compute.get(node)
+    let pipeline = this._pipelines.get(node) as GPUComputePipeline | undefined
     if (!pipeline) {
       pipeline = this.device.createComputePipeline({
         compute: {
@@ -638,7 +637,7 @@ export class WebGPURenderer {
         },
         layout: 'auto',
       })
-      this._compute.set(node, pipeline)
+      this._pipelines.set(node, pipeline)
     }
 
     const commandEncoder = this.device.createCommandEncoder()

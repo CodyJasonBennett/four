@@ -195,7 +195,7 @@ export class WebGLRenderer {
   private _FBOs = new Compiled<RenderTarget, WebGLFramebuffer>()
   private _transformFeedback?: WebGLTransformFeedback
   private _textureIndex = 0
-  private _v = new Vector3()
+  private _vec3 = new Vector3()
 
   constructor({ canvas, context, ...rest }: Partial<WebGLRendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
@@ -548,8 +548,8 @@ export class WebGLRenderer {
         (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
         // Depth sort with a camera if able
         (!!camera &&
-          this._v.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
-            this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
+          this._vec3.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
+            this._vec3.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
         // Reverse painter's sort transparent
         (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
     )
