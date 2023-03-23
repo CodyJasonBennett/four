@@ -107,6 +107,11 @@ function parseUniforms(...shaders: string[]): string[] | undefined {
 }
 
 /**
+ * Matches against WGSL workgroup attributes.
+ */
+const WORKGROUP_REGEX = /@workgroup_size\(([^)]+)\)/
+
+/**
  * {@link WebGPURenderer} constructor parameters.
  */
 export interface WebGPURendererOptions {
@@ -662,8 +667,12 @@ export class WebGPURenderer {
       passEncoder.setBindGroup(0, bindGroup)
     }
 
+    const workgroupCount: [number, number, number] = JSON.parse(
+      `[${node.material.compute!.match(WORKGROUP_REGEX)![1]}]`,
+    )
+
     passEncoder.setPipeline(pipeline)
-    passEncoder.dispatchWorkgroups(64)
+    passEncoder.dispatchWorkgroups(...workgroupCount)
     passEncoder.end()
     this.device.queue.submit([commandEncoder.finish()])
   }
