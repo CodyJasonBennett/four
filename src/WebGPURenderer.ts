@@ -440,19 +440,13 @@ export class WebGPURenderer {
       if (!buffer) {
         buffer = this._createBuffer(attribute.data, isIndex ? GPU_BUFFER_USAGE_INDEX : GPU_BUFFER_USAGE_VERTEX)
         this._buffers.set(attribute, buffer)
-        attribute.needsUpdate = false
       }
 
-      if (attribute.needsUpdate) {
-        this._writeBuffer(buffer, attribute.data)
-        attribute.needsUpdate = false
-      }
+      if (attribute.needsUpdate) this._writeBuffer(buffer, attribute.data)
+      attribute.needsUpdate = false
 
-      if (isIndex) {
-        this._passEncoder.setIndexBuffer(buffer, 'uint32')
-      } else {
-        this._passEncoder.setVertexBuffer(slot++, buffer)
-      }
+      if (isIndex) this._passEncoder.setIndexBuffer(buffer, 'uint32')
+      else this._passEncoder.setVertexBuffer(slot++, buffer)
     }
 
     if (!this._geometry.get(mesh.geometry)) {

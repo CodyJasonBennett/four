@@ -614,14 +614,5 @@ export class WebGLRenderer {
     this.gl.endTransformFeedback()
     this.gl.disable(GL_RASTERIZER_DISCARD)
     this.gl.bindTransformFeedback(GL_TRANSFORM_FEEDBACK, null)
-
-    for (const output of outputs) {
-      const attribute = node.geometry.attributes[output]
-      const buffer = this._buffers.get(attribute)!
-
-      this.gl.bindBuffer(GL_ARRAY_BUFFER, buffer)
-      this.gl.getBufferSubData(GL_ARRAY_BUFFER, 0, attribute.data)
-      this.gl.bindBuffer(GL_ARRAY_BUFFER, null)
-    }
   }
 }
