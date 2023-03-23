@@ -32,6 +32,7 @@ const GPU_BUFFER_USAGE_COPY_DST = 0x8
 const GPU_BUFFER_USAGE_INDEX = 0x10
 const GPU_BUFFER_USAGE_VERTEX = 0x20
 const GPU_BUFFER_USAGE_UNIFORM = 0x40
+const GPU_BUFFER_USAGE_STORAGE = 0x80
 
 const GPU_TEXTURE_USAGE_COPY_SRC = 0x1
 const GPU_TEXTURE_USAGE_COPY_DST = 0x2
@@ -643,8 +644,31 @@ export class WebGPURenderer {
 
     const commandEncoder = this.device.createCommandEncoder()
     const passEncoder = commandEncoder.beginComputePass()
+
+    let binding = 0
+    const entries: GPUBindGroupEntry[] = []
+
+    for (const key in node.geometry.attributes) {
+      const attribute = node.geometry.attributes[key]
+      let buffer = this._buffers.get(attribute)
+      if (!buffer) {
+        buffer = this._createBuffer(attribute.data, GPU_BUFFER_USAGE_VERTEX | GPU_BUFFER_USAGE_STORAGE)
+        this._buffers.set(attribute, buffer)
+      }
+      if (attribute.needsUpdate) this._writeBuffer(buffer, attribute.data)
+      attribute.needsUpdate = false
+      entries.push({ binding: binding++, resource: { buffer } })
+    }
+
+    if (entries.length) {
+      const bindGroup = this.device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries,
+      })
+      passEncoder.setBindGroup(0, bindGroup)
+    }
+
     passEncoder.setPipeline(pipeline)
-    // passEncoder.setBindGroup(0, null!)
     passEncoder.dispatchWorkgroups(64)
     passEncoder.end()
     this.device.queue.submit([commandEncoder.finish()])
