@@ -79,11 +79,9 @@ export default vite.defineConfig({
 
         const blue = (text: string) => `\x1b[34m${text}\x1b[39m`
         const green = (text: string) => `\x1b[32m${text}\x1b[39m`
-        const measure = (bytes: number) => `${bytes} B`
 
         for (const ext in bundles) {
-          const size = bundles[ext]
-          console.info(`Created bundle ${blue(`dist/index${ext}`)}: ${green(measure(size))}`)
+          console.info(`Created bundle ${blue(`dist/index${ext}`)}: ${green(`${bundles[ext]} B`)}`)
         }
       },
     },
