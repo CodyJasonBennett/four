@@ -40,6 +40,7 @@ const geometry = new Geometry({
 
 const material = new Material({
   transparent: true,
+  depthWrite: false,
   vertex: /* glsl */ `#version 300 es
     uniform mat4 projectionMatrix;
     uniform mat4 modelViewMatrix;

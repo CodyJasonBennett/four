@@ -40,6 +40,7 @@ const geometry = new Geometry({
 
 const material = new Material({
   transparent: true,
+  depthWrite: false,
   vertex: /* wgsl */ `
     struct Uniforms {
       projectionMatrix: mat4x4<f32>,
