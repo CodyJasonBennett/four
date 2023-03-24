@@ -192,7 +192,7 @@ export class WebGPURenderer {
   private _commandEncoder!: GPUCommandEncoder
   private _passEncoder!: GPURenderPassEncoder
   private _renderTarget: RenderTarget | null = null
-  private _vec3 = new Vector3()
+  private _v = new Vector3()
 
   constructor({ canvas, context, format, device, ...params }: Partial<WebGPURendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
@@ -539,8 +539,8 @@ export class WebGPURenderer {
         (b.material.depthTest as unknown as number) - (a.material.depthTest as unknown as number) ||
         // Depth sort with a camera if able
         (!!camera &&
-          this._vec3.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
-            this._vec3.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
+          this._v.set(b.matrix[12], b.matrix[13], b.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z -
+            this._v.set(a.matrix[12], a.matrix[13], a.matrix[14]).applyMatrix4(camera.projectionViewMatrix).z) ||
         // Reverse painter's sort transparent
         (a.material.transparent as unknown as number) - (b.material.transparent as unknown as number),
     )

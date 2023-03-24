@@ -6,11 +6,12 @@ import * as vite from 'vite'
 const mangleMap: Record<string, string> = {
   _compiled: '_c',
   _programs: '_p',
-  _VAOs: '_v',
+  _geometry: '_g',
   _buffers: '_b',
   _textures: '_t',
   _samplers: '_s',
   _FBOs: '_f',
+  _UBOs: '_u',
   _pipelines: '_p',
 }
 
