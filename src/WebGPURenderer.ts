@@ -189,7 +189,7 @@ export class WebGPURenderer {
     this.canvas = canvas ?? document.createElement('canvas')
     this.context = context ?? this.canvas.getContext('webgpu')!
     this.format = format ?? navigator.gpu.getPreferredCanvasFormat()
-    this.device = device ?? _device
+    this.device = device ?? _device!
     this._resizeSwapchain()
   }
 
