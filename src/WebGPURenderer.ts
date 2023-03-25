@@ -94,18 +94,12 @@ function parseUniforms(...shaders: string[]): string[] | undefined {
   // Remove comments for parsing
   const shader = shaders[0].replace(/\/\*(?:[^*]|\**[^*/])*\*+\/|\/\/.*/g, '')
 
-  // Bail if no uniforms defined
-  if (!shader.includes('uniform ') && !shader.includes('var<uniform>')) return
-
   // Detect and parse shader layout
-  const selector = shader.match(/var\s*<\s*uniform\s*>[^;]+(?:\s|:)(\w+);/)?.[1] ?? 'uniform '
+  const selector = shader.match(/var\s*<\s*uniform\s*>[^;]+(?:\s|:)(\w+);/)?.[1]
   const layout = shader.match(new RegExp(`${selector}[^\\{]+\\{([^\\}]+)\\}`))?.[1]
-  if (!layout) return
 
   // Parse definitions
-  const names = Array.from(layout.match(/\w+(?=[;:])/g)!)
-
-  return names
+  if (layout) return Array.from(layout.match(/\w+(?=[;:])/g)!)
 }
 
 /**
