@@ -22,9 +22,9 @@ export default vite.defineConfig({
   },
   build: {
     sourcemap: true,
-    target: 'es2018',
+    target: 'esnext',
     lib: {
-      formats: ['es', 'cjs'],
+      formats: ['es'],
       entry: 'src/index.ts',
       fileName: '[name]',
     },
@@ -55,7 +55,7 @@ export default vite.defineConfig({
       renderChunk: {
         order: 'post',
         handler(code, { fileName }) {
-          return vite.transformWithEsbuild(code, fileName, { minify: true, target: 'es2018' })
+          return vite.transformWithEsbuild(code, fileName, { minify: true })
         },
       },
     },

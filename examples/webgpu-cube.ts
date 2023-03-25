@@ -1,7 +1,7 @@
 import { WebGPURenderer, PerspectiveCamera, Geometry, Material, Mesh } from 'four'
 import { OrbitControls } from './utils/OrbitControls'
 
-const renderer = await new WebGPURenderer().init()
+const renderer = new WebGPURenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
 

@@ -112,6 +112,9 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
  */
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
+const _adapter = await navigator.gpu.requestAdapter()
+const _device = await _adapter!.requestDevice()
+
 /**
  * {@link WebGPURenderer} constructor parameters.
  */
@@ -132,18 +135,6 @@ export interface WebGPURendererOptions {
    * An optional {@link GPUTextureFormat} to create texture views with.
    */
   format: GPUTextureFormat
-  /**
-   * Whether to prioritize rendering performance or power efficiency.
-   */
-  powerPreference: GPUPowerPreference
-  /**
-   * Will fail device initialization if a feature is not met.
-   */
-  requiredFeatures: Iterable<GPUFeatureName>
-  /**
-   * Will fail device initialization if a limit is not met.
-   */
-  requiredLimits: Record<string, GPUSize64>
 }
 
 /**
@@ -175,7 +166,6 @@ export class WebGPURenderer {
    */
   public samples = 4
 
-  private _params: Partial<Omit<WebGPURendererOptions, 'canvas'>>
   private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
@@ -195,17 +185,15 @@ export class WebGPURenderer {
   private _renderTarget: RenderTarget | null = null
   private _v = new Vector3()
 
-  constructor({ canvas, context, format, device, ...params }: Partial<WebGPURendererOptions> = {}) {
+  constructor({ canvas, context, format, device }: Partial<WebGPURendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
     this.context = context ?? this.canvas.getContext('webgpu')!
     this.format = format ?? navigator.gpu.getPreferredCanvasFormat()
-    this.device = device!
-    this._params = params
+    this.device = device ?? _device
+    this._resizeSwapchain()
   }
 
   private _resizeSwapchain(): void {
-    if (!this.device) return
-
     this.context.configure({
       device: this.device,
       format: this.format,
@@ -249,20 +237,6 @@ export class WebGPURenderer {
    */
   setRenderTarget(renderTarget: RenderTarget | null): void {
     this._renderTarget = renderTarget
-  }
-
-  /**
-   * Initializes the internal WebGPU context and swapchain.
-   */
-  async init(): Promise<this> {
-    if (!this.device) {
-      const adapter = await navigator.gpu.requestAdapter(this._params)
-      this.device = await adapter!.requestDevice(this._params)
-    }
-
-    this._resizeSwapchain()
-
-    return this
   }
 
   private _createBuffer(data: AttributeData, usage: GPUBufferUsageFlags): GPUBuffer {
