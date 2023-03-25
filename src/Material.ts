@@ -82,6 +82,10 @@ export interface MaterialOptions {
    */
   fragment: string
   /**
+   * Stringified compute shader code.
+   */
+  compute: string
+  /**
    * Which face {@link Side} should be rendered. Default is `front`.
    */
   side?: Side
@@ -105,30 +109,28 @@ export interface MaterialOptions {
 
 export class Material implements MaterialOptions {
   readonly uniforms: Record<string, Uniform> = {}
-  readonly vertex!: string
-  readonly fragment!: string
+  public vertex!: string
+  public fragment!: string
+  public compute!: string
   public side: Side = 'front'
   public transparent = false
   public depthTest = true
   public depthWrite = true
   public blending?: Blending
 
-  constructor(options?: MaterialOptions) {
-    if (options) {
-      if (options.transparent) {
-        this.blending = {
-          color: {
-            operation: 'add',
-            srcFactor: 'src-alpha',
-            dstFactor: 'one-minus-src-alpha',
-          },
-          alpha: {
-            operation: 'add',
-            srcFactor: 'one',
-            dstFactor: 'one-minus-src-alpha',
-          },
-        }
-        this.depthWrite = false
+  constructor(options?: Omit<MaterialOptions, 'compute'> | Omit<MaterialOptions, 'vertex' | 'fragment'>) {
+    if (options?.transparent) {
+      this.blending = {
+        color: {
+          operation: 'add',
+          srcFactor: 'src-alpha',
+          dstFactor: 'one-minus-src-alpha',
+        },
+        alpha: {
+          operation: 'add',
+          srcFactor: 'one',
+          dstFactor: 'one-minus-src-alpha',
+        },
       }
     }
 

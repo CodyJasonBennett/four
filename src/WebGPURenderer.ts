@@ -32,6 +32,7 @@ const GPU_BUFFER_USAGE_COPY_DST = 0x8
 const GPU_BUFFER_USAGE_INDEX = 0x10
 const GPU_BUFFER_USAGE_VERTEX = 0x20
 const GPU_BUFFER_USAGE_UNIFORM = 0x40
+const GPU_BUFFER_USAGE_STORAGE = 0x80
 
 const GPU_TEXTURE_USAGE_COPY_SRC = 0x1
 const GPU_TEXTURE_USAGE_COPY_DST = 0x2
@@ -82,6 +83,8 @@ function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
  * Returns a list of used uniforms from shader uniform structs.
  */
 function parseUniforms(...shaders: string[]): string[] | undefined {
+  shaders = shaders.filter(Boolean)
+
   // Filter to most complete definition
   if (shaders.length > 1) {
     const definitions = shaders.map((shader) => parseUniforms(shader))
@@ -91,19 +94,23 @@ function parseUniforms(...shaders: string[]): string[] | undefined {
   // Remove comments for parsing
   const shader = shaders[0].replace(/\/\*(?:[^*]|\**[^*/])*\*+\/|\/\/.*/g, '')
 
-  // Bail if no uniforms defined
-  if (!shader.includes('uniform ') && !shader.includes('var<uniform>')) return
-
   // Detect and parse shader layout
-  const selector = shader.match(/var<uniform>[^;]+(?:\s|:)(\w+);/)?.[1] ?? 'uniform '
+  const selector = shader.match(/var\s*<\s*uniform\s*>[^;]+(?:\s|:)(\w+);/)?.[1]
   const layout = shader.match(new RegExp(`${selector}[^\\{]+\\{([^\\}]+)\\}`))?.[1]
-  if (!layout) return
 
   // Parse definitions
-  const names = Array.from(layout.match(/\w+(?=[;:])/g)!)
-
-  return names
+  if (layout) return Array.from(layout.match(/\w+(?=[;:])/g)!)
 }
+
+/**
+ * Matches against WGSL storage bindings.
+ */
+const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
+
+/**
+ * Matches against WGSL workgroup attributes.
+ */
+const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
 /**
  * {@link WebGPURenderer} constructor parameters.
@@ -172,7 +179,7 @@ export class WebGPURenderer {
   private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
-  private _pipelines = new Compiled<Mesh, GPURenderPipeline>()
+  private _pipelines = new Compiled<Mesh, GPURenderPipeline | GPUComputePipeline>()
   private _textures = new Compiled<Texture, GPUTexture>()
   private _samplers = new Compiled<Sampler, GPUSampler>()
   private _FBOs = new Compiled<
@@ -184,7 +191,7 @@ export class WebGPURenderer {
   private _depthTexture!: GPUTexture
   private _depthTextureView!: GPUTextureView
   private _commandEncoder!: GPUCommandEncoder
-  private _passEncoder!: GPURenderPassEncoder
+  private _passEncoder!: GPURenderPassEncoder | GPUComputePassEncoder
   private _renderTarget: RenderTarget | null = null
   private _v = new Vector3()
 
@@ -261,7 +268,7 @@ export class WebGPURenderer {
   private _createBuffer(data: AttributeData, usage: GPUBufferUsageFlags): GPUBuffer {
     const buffer = this.device.createBuffer({
       size: data.byteLength,
-      usage: usage | GPU_BUFFER_USAGE_COPY_DST,
+      usage: usage | GPU_BUFFER_USAGE_COPY_DST | GPU_BUFFER_USAGE_STORAGE,
       mappedAtCreation: true,
     })
 
@@ -373,61 +380,73 @@ export class WebGPURenderer {
       })
     }
 
-    const transparent = mesh.material.transparent
-    const cullMode = GPU_CULL_SIDES[mesh.material.side] as GPUCullMode
-    const topology = GPU_DRAW_MODES[mesh.mode] as GPUPrimitiveTopology
-    const depthWriteEnabled = mesh.material.depthWrite
-    const depthCompare = (mesh.material.depthTest ? 'less' : 'always') as GPUCompareFunction
-    const blending = mesh.material.blending
-    const colorAttachments = this._renderTarget?.count ?? 1
-    const samples = this.samples
-
-    const pipelineCacheKey = JSON.stringify([
-      transparent,
-      cullMode,
-      topology,
-      depthWriteEnabled,
-      depthCompare,
-      buffers,
-      blending,
-      colorAttachments,
-      samples,
-    ])
-
     let pipeline = this._pipelines.get(mesh)
-    if (!pipeline || pipeline.label !== pipelineCacheKey) {
-      pipeline = this.device.createRenderPipeline({
-        label: pipelineCacheKey,
-        vertex: {
-          module: this.device.createShaderModule({ code: mesh.material.vertex }),
-          entryPoint: 'main',
-          buffers,
-        },
-        fragment: {
-          module: this.device.createShaderModule({ code: mesh.material.fragment }),
-          entryPoint: 'main',
-          targets: Array<GPUColorTargetState>(colorAttachments).fill({
-            format: this.format,
-            blend: mesh.material.blending,
-            writeMask: GPU_COLOR_WRITE_ALL,
-          }),
-        },
-        primitive: {
-          frontFace: 'ccw',
-          cullMode,
-          topology,
-        },
-        depthStencil: {
-          depthWriteEnabled,
-          depthCompare,
-          format: 'depth24plus-stencil8',
-        },
-        multisample: { count: samples },
-        layout: 'auto',
-      })
+    if (mesh.material.compute) {
+      if (!pipeline) {
+        pipeline = this.device.createComputePipeline({
+          compute: {
+            module: this.device.createShaderModule({ code: mesh.material.compute! }),
+            entryPoint: 'main',
+          },
+          layout: 'auto',
+        })
+      }
+    } else {
+      const transparent = mesh.material.transparent
+      const cullMode = GPU_CULL_SIDES[mesh.material.side] as GPUCullMode
+      const topology = GPU_DRAW_MODES[mesh.mode] as GPUPrimitiveTopology
+      const depthWriteEnabled = mesh.material.depthWrite
+      const depthCompare = (mesh.material.depthTest ? 'less' : 'always') as GPUCompareFunction
+      const blending = mesh.material.blending
+      const colorAttachments = this._renderTarget?.count ?? 1
+      const samples = this.samples
+
+      const pipelineCacheKey = JSON.stringify([
+        transparent,
+        cullMode,
+        topology,
+        depthWriteEnabled,
+        depthCompare,
+        buffers,
+        blending,
+        colorAttachments,
+        samples,
+      ])
+
+      if (!pipeline || pipeline.label !== pipelineCacheKey) {
+        pipeline = this.device.createRenderPipeline({
+          label: pipelineCacheKey,
+          vertex: {
+            module: this.device.createShaderModule({ code: mesh.material.vertex }),
+            entryPoint: 'main',
+            buffers,
+          },
+          fragment: {
+            module: this.device.createShaderModule({ code: mesh.material.fragment }),
+            entryPoint: 'main',
+            targets: Array<GPUColorTargetState>(colorAttachments).fill({
+              format: this.format,
+              blend: mesh.material.blending,
+              writeMask: GPU_COLOR_WRITE_ALL,
+            }),
+          },
+          primitive: {
+            frontFace: 'ccw',
+            cullMode,
+            topology,
+          },
+          depthStencil: {
+            depthWriteEnabled,
+            depthCompare,
+            format: 'depth24plus-stencil8',
+          },
+          multisample: { count: samples },
+          layout: 'auto',
+        })
+      }
       this._pipelines.set(mesh, pipeline)
     }
-    this._passEncoder.setPipeline(pipeline)
+    this._passEncoder.setPipeline(pipeline as any)
 
     let slot = 0
     for (const key in mesh.geometry.attributes) {
@@ -438,18 +457,14 @@ export class WebGPURenderer {
       if (!buffer) {
         buffer = this._createBuffer(attribute.data, isIndex ? GPU_BUFFER_USAGE_INDEX : GPU_BUFFER_USAGE_VERTEX)
         this._buffers.set(attribute, buffer)
-        attribute.needsUpdate = false
       }
 
-      if (attribute.needsUpdate) {
-        this._writeBuffer(buffer, attribute.data)
-        attribute.needsUpdate = false
-      }
+      if (attribute.needsUpdate) this._writeBuffer(buffer, attribute.data)
+      attribute.needsUpdate = false
 
-      if (isIndex) {
-        this._passEncoder.setIndexBuffer(buffer, 'uint32')
-      } else {
-        this._passEncoder.setVertexBuffer(slot++, buffer)
+      if (this._passEncoder instanceof GPURenderPassEncoder) {
+        if (isIndex) this._passEncoder.setIndexBuffer(buffer, 'uint32')
+        else this._passEncoder.setVertexBuffer(slot++, buffer)
       }
     }
 
@@ -467,7 +482,16 @@ export class WebGPURenderer {
     let binding = 0
     const entries: GPUBindGroupEntry[] = []
 
-    const parsed = parseUniforms(mesh.material.vertex, mesh.material.fragment)
+    const storage = mesh.material.compute?.matchAll(STORAGE_REGEX)
+    if (storage) {
+      for (const [, output] of storage) {
+        const attribute = mesh.geometry.attributes[output]
+        const buffer = this._buffers.get(attribute)!
+        entries.push({ binding: binding++, resource: { buffer } })
+      }
+    }
+
+    const parsed = parseUniforms(mesh.material.vertex, mesh.material.fragment, mesh.material.compute)
     if (parsed) {
       const uniforms = parsed.map((key) => mesh.material.uniforms[key])
       let UBO = this._UBOs.get(mesh.material)
@@ -625,5 +649,19 @@ export class WebGPURenderer {
     this.device.queue.submit([this._commandEncoder.finish()])
 
     if (FBO) this.samples = samples
+  }
+
+  compute(node: Mesh): void {
+    this._commandEncoder = this.device.createCommandEncoder()
+    this._passEncoder = this._commandEncoder.beginComputePass()
+
+    const workgroupCount: [number, number, number] = JSON.parse(
+      `[${node.material.compute!.match(WORKGROUP_REGEX)![1]}]`,
+    )
+
+    this.compile(node)
+    this._passEncoder.dispatchWorkgroups(...workgroupCount)
+    this._passEncoder.end()
+    this.device.queue.submit([this._commandEncoder.finish()])
   }
 }

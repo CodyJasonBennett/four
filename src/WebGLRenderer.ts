@@ -37,6 +37,11 @@ const GL_LESS = 0x0201
 const GL_FRONT = 0x0404
 const GL_BACK = 0x0405
 const GL_TEXTURE0 = 0x84c0
+const GL_POINTS = 0x0000
+const GL_TRANSFORM_FEEDBACK = 0x8e22
+const GL_TRANSFORM_FEEDBACK_BUFFER = 0x8c8e
+const GL_SEPARATE_ATTRIBS = 0x8c8d
+const GL_RASTERIZER_DISCARD = 0x8c89
 
 const GL_NEAREST = 0x2600
 const GL_LINEAR = 0x2601
@@ -99,6 +104,11 @@ const GL_BLEND_OPERATIONS: Record<BlendOperation, number> = {
   min: GL_MIN,
   max: GL_MAX,
 } as const
+
+/**
+ * Matches against GLSL shader outputs.
+ */
+const VARYING_REGEX = /[^\w](?:varying|out)\s+\w+\s+(\w+)\s*;/g
 
 /**
  * Represents WebGL compiled {@link Mesh} state.
@@ -178,11 +188,12 @@ export class WebGLRenderer {
   public autoClear = true
   private _compiled = new Compiled<Mesh, WebGLCompiled>()
   private _programs = new Compiled<Material, WebGLProgram>()
-  private _VAOs = new Compiled<Geometry, WebGLVertexArrayObject>()
+  private _geometry = new Compiled<Geometry, WebGLVertexArrayObject>()
   private _buffers = new Compiled<Attribute, WebGLBuffer>()
   private _textures = new Compiled<Texture, WebGLTexture>()
   private _samplers = new Compiled<Sampler, WebGLSampler>()
   private _FBOs = new Compiled<RenderTarget, WebGLFramebuffer>()
+  private _transformFeedback?: WebGLTransformFeedback
   private _textureIndex = 0
   private _v = new Vector3()
 
@@ -411,12 +422,12 @@ export class WebGLRenderer {
       this._programs.set(mesh.material, program, () => this.gl.deleteProgram(program!))
 
       const vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
-      this.gl.shaderSource(vertexShader, mesh.material.vertex)
+      this.gl.shaderSource(vertexShader, mesh.material.vertex ?? mesh.material.compute)
       this.gl.compileShader(vertexShader)
       this.gl.attachShader(program, vertexShader)
 
       const fragmentShader = this.gl.createShader(GL_FRAGMENT_SHADER)!
-      this.gl.shaderSource(fragmentShader, mesh.material.fragment)
+      this.gl.shaderSource(fragmentShader, mesh.material.fragment ?? '#version 300 es\nvoid main(){}')
       this.gl.compileShader(fragmentShader)
       this.gl.attachShader(program, fragmentShader)
 
@@ -434,10 +445,10 @@ export class WebGLRenderer {
       this.gl.deleteShader(fragmentShader)
     }
 
-    let VAO = this._VAOs.get(mesh.geometry)
+    let VAO = this._geometry.get(mesh.geometry)
     if (!VAO) {
       VAO = this.gl.createVertexArray()!
-      this._VAOs.set(mesh.geometry, VAO, () => this.gl.deleteVertexArray(VAO!))
+      this._geometry.set(mesh.geometry, VAO, () => this.gl.deleteVertexArray(VAO!))
     }
 
     this.gl.useProgram(program)
@@ -568,5 +579,40 @@ export class WebGLRenderer {
       else if (position) this.gl.drawArraysInstanced(mode, 0, position.data.length / position.size, node.instances)
       else this.gl.drawArraysInstanced(mode, 0, 3, node.instances)
     }
+  }
+
+  compute(node: Mesh): void {
+    const compiled = this.compile(node)
+    this.gl.bindVertexArray(null)
+    this.gl.bindBuffer(GL_ARRAY_BUFFER, null)
+
+    const transformFeedback = (this._transformFeedback ??= this.gl.createTransformFeedback()!)
+    this.gl.bindTransformFeedback(GL_TRANSFORM_FEEDBACK, transformFeedback)
+
+    let length = 0
+    const outputs: string[] = []
+    for (const [, output] of node.material.compute!.matchAll(VARYING_REGEX)) {
+      const attribute = node.geometry.attributes[output]
+      const buffer = this._buffers.get(attribute)!
+      this.gl.bindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, outputs.length, buffer)
+      length = Math.max(length, attribute.data.length / attribute.size)
+      outputs.push(output)
+    }
+    this.gl.transformFeedbackVaryings(compiled.program, outputs, GL_SEPARATE_ATTRIBS)
+    this.gl.linkProgram(compiled.program)
+
+    const mode = GL_POINTS
+
+    this.gl.enable(GL_RASTERIZER_DISCARD)
+    this.gl.beginTransformFeedback(mode)
+    this.gl.bindVertexArray(compiled.VAO)
+
+    if (length) this.gl.drawArraysInstanced(mode, 0, length, node.instances)
+    else this.gl.drawArraysInstanced(mode, 0, node.instances, 1)
+
+    this.gl.bindVertexArray(null)
+    this.gl.endTransformFeedback()
+    this.gl.disable(GL_RASTERIZER_DISCARD)
+    this.gl.bindTransformFeedback(GL_TRANSFORM_FEEDBACK, null)
   }
 }
