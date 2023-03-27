@@ -309,6 +309,7 @@ const object = new Object3D()
 object.add(new Object3D(), new Object3D())
 object.traverse((node) => {
   if (node !== object) object.remove(node)
+  if (!node.visible) return true
 })
 ```
 
@@ -610,6 +611,18 @@ const camera = new OrthographicCamera(near, far, left, right, bottom, top)
 ## Rendering
 
 Four supports WebGL 2 and WebGPU with `WebGLRenderer` and `WebGPURenderer`, respectively, and implements a shared API for rendering and compute.
+
+```ts
+const renderer = new WebGLRenderer()
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.canvas)
+
+//
+
+const renderer = new WebGPURenderer()
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.canvas)
+```
 
 ### Instancing
 
