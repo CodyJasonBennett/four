@@ -295,7 +295,7 @@ export class WebGPURenderer {
       target?.destroy()
 
       target = this.device.createTexture({
-        format: this.format,
+        format: (texture.format as GPUTextureFormat | undefined) ?? this.format,
         dimension: '2d',
         size: [width, height, 1],
         usage:
@@ -625,6 +625,9 @@ export class WebGPURenderer {
     if (FBO) this.samples = samples
   }
 
+  /**
+   * Performs GPU compute on a given mesh.
+   */
   compute(node: Mesh): void {
     this._commandEncoder = this.device.createCommandEncoder()
     this._passEncoder = this._commandEncoder.beginComputePass()

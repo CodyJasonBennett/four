@@ -264,7 +264,7 @@ export class WebGLRenderer {
     if (texture.needsUpdate) {
       this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
-      const format = texture.format ?? GL_RGBA
+      const format = (texture.format as number | undefined) ?? GL_RGBA
       const type = texture.type ?? GL_UNSIGNED_BYTE
       if (texture.image) {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, format, format, type, texture.image)
@@ -581,6 +581,9 @@ export class WebGLRenderer {
     }
   }
 
+  /**
+   * Performs GPU compute on a given mesh.
+   */
   compute(node: Mesh): void {
     const compiled = this.compile(node)
     this.gl.bindVertexArray(null)

@@ -107,6 +107,9 @@ export interface MaterialOptions {
   blending?: Blending
 }
 
+/**
+ * Constructs a material object. Used to create a program interface.
+ */
 export class Material implements MaterialOptions {
   readonly uniforms: Record<string, Uniform> = {}
   public vertex!: string
