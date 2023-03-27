@@ -348,7 +348,7 @@ export class WebGPURenderer {
           {
             shaderLocation: shaderLocation++,
             offset: 0,
-            format: `float32x${attribute.size}`,
+            format: `float32x${Math.min(attribute.size, 4)}`,
           },
         ] as Iterable<GPUVertexAttribute>,
       })
