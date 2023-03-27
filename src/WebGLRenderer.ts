@@ -272,7 +272,7 @@ export class WebGLRenderer {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, null)
       }
 
-      texture.needsUpdate = false
+      if (!(texture.image instanceof HTMLVideoElement)) texture.needsUpdate = false
     }
 
     this._updateSampler(texture.sampler)

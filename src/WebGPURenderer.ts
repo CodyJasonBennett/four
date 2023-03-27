@@ -170,7 +170,7 @@ export class WebGPURenderer {
   private _geometry = new Compiled<Geometry, true>()
   private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline | GPUComputePipeline>()
-  private _textures = new Compiled<Texture, GPUTexture>()
+  private _textures = new Compiled<Texture, GPUTexture | GPUExternalTexture>()
   private _samplers = new Compiled<Sampler, GPUSampler>()
   private _FBOs = new Compiled<
     RenderTarget,
@@ -289,29 +289,33 @@ export class WebGPURenderer {
     texture: Texture,
     width = texture.image?.width ?? 0,
     height = texture.image?.height ?? 0,
-  ): GPUTexture {
+  ): GPUTexture | GPUExternalTexture {
     let target = this._textures.get(texture)
     if (!target || texture.needsUpdate) {
-      target?.destroy()
+      texture.dispose()
 
-      target = this.device.createTexture({
-        format: (texture.format as GPUTextureFormat | undefined) ?? this.format,
-        dimension: '2d',
-        size: [width, height, 1],
-        usage:
-          GPU_TEXTURE_USAGE_COPY_DST |
-          GPU_TEXTURE_USAGE_TEXTURE_BINDING |
-          GPU_TEXTURE_USAGE_RENDER_ATTACHMENT |
-          GPU_TEXTURE_USAGE_COPY_SRC,
-      })
+      if (texture.image instanceof HTMLVideoElement) {
+        target = this.device.importExternalTexture({ source: texture.image })
+      } else {
+        target = this.device.createTexture({
+          format: (texture.format as GPUTextureFormat | undefined) ?? this.format,
+          dimension: '2d',
+          size: [width, height, 1],
+          usage:
+            GPU_TEXTURE_USAGE_COPY_DST |
+            GPU_TEXTURE_USAGE_TEXTURE_BINDING |
+            GPU_TEXTURE_USAGE_RENDER_ATTACHMENT |
+            GPU_TEXTURE_USAGE_COPY_SRC,
+        })
 
-      if (texture.image) {
-        this.device.queue.copyExternalImageToTexture({ source: texture.image }, { texture: target }, [width, height])
+        if (texture.image) {
+          this.device.queue.copyExternalImageToTexture({ source: texture.image }, { texture: target }, [width, height])
+        }
+
+        texture.needsUpdate = false
       }
 
-      this._textures.set(texture, target, () => target!.destroy())
-
-      texture.needsUpdate = false
+      this._textures.set(texture, target, () => (target as any).destroy?.())
     }
 
     this._updateSampler(texture.sampler)
@@ -490,7 +494,7 @@ export class WebGPURenderer {
         if (sampler) entries.push({ binding: binding++, resource: sampler })
 
         const target = this._textures.get(value)!
-        entries.push({ binding: binding++, resource: target.createView() })
+        entries.push({ binding: binding++, resource: target instanceof GPUTexture ? target.createView?.() : target })
       }
     }
 
@@ -555,7 +559,7 @@ export class WebGPURenderer {
 
       const views = this._renderTarget.textures.map((texture) => {
         this._updateTexture(texture, this._renderTarget!.width, this._renderTarget!.height)
-        const target = this._textures.get(texture)!
+        const target = this._textures.get(texture) as GPUTexture
         return target.createView()
       })
 
