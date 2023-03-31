@@ -84,17 +84,17 @@ const composite = new Mesh(
       }
     `,
     fragment: /* wgsl */ `
-      @binding(0) @group(0) var sampler0: sampler;
-      @binding(1) @group(0) var texture0: texture_2d<f32>;
+      @group(0) @binding(0) var sampler0: sampler;
+      @group(0) @binding(1) var texture0: texture_2d<f32>;
 
-      @binding(2) @group(0) var sampler1: sampler;
-      @binding(3) @group(0) var texture1: texture_2d<f32>;
+      @group(0) @binding(2) var sampler1: sampler;
+      @group(0) @binding(3) var texture1: texture_2d<f32>;
 
-      @binding(4) @group(0) var sampler2: sampler;
-      @binding(5) @group(0) var texture2: texture_2d<f32>;
+      @group(0) @binding(4) var sampler2: sampler;
+      @group(0) @binding(5) var texture2: texture_2d<f32>;
 
-      @binding(6) @group(0) var sampler3: sampler;
-      @binding(7) @group(0) var texture3: texture_2d<f32>;
+      @group(0) @binding(6) var sampler3: sampler;
+      @group(0) @binding(7) var texture3: texture_2d<f32>;
 
       struct FragmentIn {
         @location(0) uv: vec2<f32>,

@@ -18,7 +18,7 @@ const material = new Material({
     struct Uniforms {
       time: f32,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     struct VertexIn {
       @location(0) position: vec3<f32>,
@@ -41,8 +41,8 @@ const material = new Material({
     }
   `,
   fragment: /* wgsl */ `
-    @binding(1) @group(0) var sample: sampler;
-    @binding(2) @group(0) var color: texture_2d<f32>;
+    @group(0) @binding(1) var sample: sampler;
+    @group(0) @binding(2) var color: texture_2d<f32>;
 
     struct FragmentIn {
       @location(0) color: vec4<f32>,

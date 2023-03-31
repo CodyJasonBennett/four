@@ -57,7 +57,7 @@ const material = new Material({
       normalMatrix: mat4x4<f32>,
       color: vec3<f32>,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     struct VertexIn {
       @location(0) position: vec3<f32>,

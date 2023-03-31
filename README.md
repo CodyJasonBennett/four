@@ -134,7 +134,7 @@ const material = new Material({
       projectionMatrix: mat4x4<f32>,
       modelViewMatrix: mat4x4<f32>,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     @vertex
     fn main(@location(0) position: vec3<f32>) -> @builtin(position) vec4<f32> {
@@ -427,7 +427,7 @@ const material = new Material({
       projectionMatrix: mat4x4<f32>,
       modelViewMatrix: mat4x4<f32>,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     @vertex
     fn main(@location(0) position: vec3<f32>) -> @builtin(position) vec4<f32> {
@@ -472,14 +472,14 @@ var<storage, read_write> data: array<vec2<f32>>;
 struct Uniforms {
   time: f32,
 };
-@binding(1) @group(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var<uniform> uniforms: Uniforms;
 
 // Texture bindings
-@binding(2) @group(0) var sample: sampler;
-@binding(3) @group(0) var color: texture_2d<f32>;
+@group(0) @binding(2) var sample: sampler;
+@group(0) @binding(3) var color: texture_2d<f32>;
 
-@binding(4) @group(0) var sample_2: sampler;
-@binding(5) @group(0) var color_2: texture_2d<f32>;
+@group(0) @binding(4) var sample_2: sampler;
+@group(0) @binding(5) var color_2: texture_2d<f32>;
 ```
 
 ### Blending
@@ -685,7 +685,7 @@ const material = new Material({
       modelViewMatrix: mat4x4<f32>,
       instanceMatrix: array<mat4x4<f32>, 2>,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     @vertex
     fn main(

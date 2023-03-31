@@ -46,7 +46,7 @@ const material = new Material({
       projectionMatrix: mat4x4<f32>,
       modelViewMatrix: mat4x4<f32>,
     };
-    @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+    @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
     struct VertexIn {
       @location(0) position: vec3<f32>,
