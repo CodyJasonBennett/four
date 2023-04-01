@@ -363,7 +363,7 @@ A `Geometry` contains an `Attribute` list of vertex or storage buffer data, with
 const geometry = new Geometry({
   position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
   uv: { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) },
-  index: { size: 1, data: new Uint32Array([0, 1, 2]) },
+  index: { size: 1, data: new Uint16Array([0, 1, 2]) },
 })
 ```
 

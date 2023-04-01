@@ -346,13 +346,17 @@ export class WebGPURenderer {
       const attribute = mesh.geometry.attributes[key]
       if (key === 'index') continue
 
+      const formatType = attribute.data instanceof Float32Array ? 'float' : 'uint'
+      const formatBits = attribute.data.BYTES_PER_ELEMENT * 8
+      const formatName = formatType + formatBits
+
       buffers.push({
         arrayStride: attribute.size * attribute.data.BYTES_PER_ELEMENT,
         attributes: [
           {
             shaderLocation: shaderLocation++,
             offset: 0,
-            format: `float32x${Math.min(attribute.size, 4)}`,
+            format: `${formatName}x${Math.min(attribute.size, 4)}`,
           },
         ] as Iterable<GPUVertexAttribute>,
       })
@@ -441,7 +445,8 @@ export class WebGPURenderer {
       attribute.needsUpdate = false
 
       if (this._passEncoder instanceof GPURenderPassEncoder) {
-        if (isIndex) this._passEncoder.setIndexBuffer(buffer, 'uint32')
+        if (isIndex)
+          this._passEncoder.setIndexBuffer(buffer, `uint${attribute.data.BYTES_PER_ELEMENT * 8}` as GPUIndexFormat)
         else this._passEncoder.setVertexBuffer(slot++, buffer)
       }
     }

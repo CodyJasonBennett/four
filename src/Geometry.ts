@@ -1,7 +1,15 @@
 /**
  * Represents an attribute data view.
  */
-export type AttributeData = Float32Array | Uint32Array
+export type AttributeData =
+  | Float32Array
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Uint8Array
+  | Uint8ClampedArray
+  | Uint16Array
+  | Uint32Array
 
 /**
  * Represents a geometry attribute.

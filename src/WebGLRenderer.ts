@@ -17,7 +17,6 @@ const GL_TEXTURE_MIN_FILTER = 0x2801
 const GL_TEXTURE_WRAP_S = 0x2802
 const GL_TEXTURE_WRAP_T = 0x2803
 const GL_RGBA = 0x1908
-const GL_UNSIGNED_BYTE = 0x1401
 const GL_DEPTH_TEST = 0x0b71
 const GL_CULL_FACE = 0x0b44
 const GL_BLEND = 0x0be2
@@ -27,12 +26,10 @@ const GL_FRAGMENT_SHADER = 0x8b30
 const GL_ELEMENT_ARRAY_BUFFER = 0x8893
 const GL_ARRAY_BUFFER = 0x8892
 const GL_STATIC_DRAW = 0x88e4
-const GL_FLOAT = 0x1406
 const GL_DYNAMIC_DRAW = 0x88e8
 const GL_COLOR_BUFFER_BIT = 0x00004000
 const GL_DEPTH_BUFFER_BIT = 0x00000100
 const GL_STENCIL_BUFFER_BIT = 0x00000400
-const GL_UNSIGNED_INT = 0x1405
 const GL_LESS = 0x0201
 const GL_FRONT = 0x0404
 const GL_BACK = 0x0405
@@ -104,6 +101,39 @@ const GL_BLEND_OPERATIONS: Record<BlendOperation, number> = {
   min: GL_MIN,
   max: GL_MAX,
 } as const
+
+const GL_FLOAT = 0x1406
+const GL_BYTE = 0x1400
+const GL_SHORT = 0x1402
+const GL_INT = 0x1404
+const GL_UNSIGNED_BYTE = 0x1401
+const GL_UNSIGNED_SHORT = 0x1403
+const GL_UNSIGNED_INT = 0x1405
+
+/**
+ * Gets the appropriate WebGL data type for a data view.
+ */
+const getDataType = (data: ArrayBufferView): number | null => {
+  switch (data.constructor) {
+    case Float32Array:
+      return GL_FLOAT
+    case Int8Array:
+      return GL_BYTE
+    case Int16Array:
+      return GL_SHORT
+    case Int32Array:
+      return GL_INT
+    case Uint8Array:
+    case Uint8ClampedArray:
+      return GL_UNSIGNED_BYTE
+    case Uint16Array:
+      return GL_UNSIGNED_SHORT
+    case Uint32Array:
+      return GL_UNSIGNED_INT
+    default:
+      return null
+  }
+}
 
 /**
  * Matches against GLSL shader outputs.
@@ -477,14 +507,14 @@ export class WebGLRenderer {
 
           for (let i = 0; i < slots; i++) {
             this.gl.enableVertexAttribArray(location + i)
-            this.gl.vertexAttribPointer(
-              location + i,
-              attribute.size / slots,
-              GL_FLOAT,
-              false,
-              4 * attribute.size,
-              i * attribute.size,
-            )
+            const type = getDataType(attribute.data)!
+            const stride = attribute.size * attribute.data.BYTES_PER_ELEMENT
+            const offset = attribute.size * i
+            if (type === GL_FLOAT) {
+              this.gl.vertexAttribPointer(location, attribute.size, type, false, stride, offset)
+            } else {
+              this.gl.vertexAttribIPointer(location, attribute.size, type, stride, offset)
+            }
             if (attribute.divisor) this.gl.vertexAttribDivisor(location + i, attribute.divisor)
           }
         }
@@ -575,7 +605,8 @@ export class WebGLRenderer {
 
       const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
       const { index, position } = node.geometry.attributes
-      if (index) this.gl.drawElementsInstanced(mode, index.data.length / index.size, GL_UNSIGNED_INT, 0, node.instances)
+      if (index)
+        this.gl.drawElementsInstanced(mode, index.data.length / index.size, getDataType(index.data)!, 0, node.instances)
       else if (position) this.gl.drawArraysInstanced(mode, 0, position.data.length / position.size, node.instances)
       else this.gl.drawArraysInstanced(mode, 0, 3, node.instances)
     }
