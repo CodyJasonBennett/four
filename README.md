@@ -630,7 +630,7 @@ Four instances by default, which better aligns with WebGPU. Instanced rendering 
 
 You can specify the number of instances to render with `Mesh.instances` and add variance or control each instance with `Attribute.divisor` to specify a per-instance divisor. A divisor of one will be used by a single instance, and a divisor greater than one will be used by multiple instances.
 
-> **Note**: `Attribute.divisor` has no effect in WebGPU, so you must allocate and index storage or uniform buffers via the `instance_index` built-in.
+> **Note**: Attributes can only allocate primitive types in WebGPU ([gpuweb/gpuweb#1652](https://github.com/gpuweb/gpuweb/issues/1652)), so you must allocate and index storage or uniform buffers via the `instance_index` built-in for complex types like matrices.
 
 <details>
 

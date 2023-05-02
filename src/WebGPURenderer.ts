@@ -351,7 +351,8 @@ export class WebGPURenderer {
       const formatName = formatType + formatBits
 
       buffers.push({
-        arrayStride: attribute.size * attribute.data.BYTES_PER_ELEMENT,
+        arrayStride: attribute.size * attribute.data.BYTES_PER_ELEMENT * (attribute.divisor || 1),
+        stepMode: attribute.divisor ? 'instance' : 'vertex',
         attributes: [
           {
             shaderLocation: shaderLocation++,
