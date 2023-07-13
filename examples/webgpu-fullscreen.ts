@@ -4,11 +4,6 @@ const renderer = new WebGPURenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
 
-const geometry = new Geometry({
-  position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
-  uv: { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) },
-})
-
 const material = new Material({
   uniforms: {
     time: 0,
@@ -20,23 +15,20 @@ const material = new Material({
     };
     @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
-    struct VertexIn {
-      @location(0) position: vec3<f32>,
-      @location(1) uv: vec2<f32>,
-    };
-
     struct VertexOut {
       @builtin(position) position: vec4<f32>,
       @location(0) color: vec4<f32>,
       @location(1) uv: vec2<f32>,
     };
 
+    const triangle = array<vec2<f32>, 3>(vec2(-1), vec2(3, -1), vec2(-1, 3));
+
     @vertex
-    fn main(input: VertexIn) -> VertexOut {
+    fn main(@builtin(vertex_index) i: u32) -> VertexOut {
       var out: VertexOut;
-      out.position = vec4(input.position, 1.0);
-      out.color = vec4(0.5 + 0.3 * cos(vec3(input.uv, 0.0) + uniforms.time), 0.0);
-      out.uv = input.uv;
+      out.position = vec4(triangle[i], 0, 1);
+      out.uv = abs(out.position.xy) - 1.0;
+      out.color = vec4(0.5 + 0.3 * cos(vec3(out.uv, 0.0) + uniforms.time), 0.0);
       return out;
     }
   `,
@@ -62,7 +54,9 @@ const material = new Material({
   `,
 })
 
-const mesh = new Mesh(geometry, material)
+const mesh = new Mesh()
+mesh.material = material
+mesh.geometry.drawRange.count = 3
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)

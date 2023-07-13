@@ -64,7 +64,7 @@ const material = new Material({
     }
   `,
   fragment: /* glsl */ `#version 300 es
-    precision highp float;
+    precision lowp float;
 
     uniform vec3 color;
     in vec3 vNormal;

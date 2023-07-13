@@ -34,9 +34,22 @@ export interface Attribute {
 }
 
 /**
+ * Specifies the visible range of vertices or indices to draw when rendering.
+ */
+export interface DrawRange {
+  start: number
+  count: number
+}
+
+/**
  * Constructs a geometry object. Used to store program attributes.
  */
 export class Geometry {
+  /**
+   * Configures the geometry's {@link DrawRange}.
+   */
+  drawRange: DrawRange = { start: 0, count: Infinity }
+
   constructor(
     /**
      * Geometry program attributes.

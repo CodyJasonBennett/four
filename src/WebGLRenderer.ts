@@ -605,9 +605,17 @@ export class WebGLRenderer {
 
       const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
       const { index, position } = node.geometry.attributes
+      const { start, count } = node.geometry.drawRange
       if (index)
-        this.gl.drawElementsInstanced(mode, index.data.length / index.size, getDataType(index.data)!, 0, node.instances)
-      else if (position) this.gl.drawArraysInstanced(mode, 0, position.data.length / position.size, node.instances)
+        this.gl.drawElementsInstanced(
+          mode,
+          min(count, index.data.length / index.size),
+          getDataType(index.data)!,
+          start,
+          node.instances,
+        )
+      else if (position)
+        this.gl.drawArraysInstanced(mode, start, min(count, position.data.length / position.size), node.instances)
       else this.gl.drawArraysInstanced(mode, 0, 3, node.instances)
     }
   }

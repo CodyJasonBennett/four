@@ -1,13 +1,8 @@
-import { WebGLRenderer, Geometry, Material, Mesh, Texture } from 'four'
+import { WebGLRenderer, Material, Mesh, Texture } from 'four'
 
 const renderer = new WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
-
-const geometry = new Geometry({
-  position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
-  uv: { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) },
-})
 
 const material = new Material({
   uniforms: {
@@ -15,18 +10,17 @@ const material = new Material({
     color: new Texture(await createImageBitmap(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1))),
   },
   vertex: /* glsl */ `#version 300 es
-    in vec2 uv;
-    in vec3 position;
-
     out vec2 vUv;
+
+    const vec2 triangle[3] = vec2[](vec2(-1), vec2(3, -1), vec2(-1, 3));
   
     void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1);
+      gl_Position = vec4(triangle[gl_VertexID], 0, 1);
+      vUv = abs(gl_Position.xy) - 1.0;
     }
   `,
   fragment: /* glsl */ `#version 300 es
-    precision highp float;
+    precision lowp float;
 
     uniform float time;
     uniform sampler2D color;
@@ -40,7 +34,9 @@ const material = new Material({
   `,
 })
 
-const mesh = new Mesh(geometry, material)
+const mesh = new Mesh()
+mesh.material = material
+mesh.geometry.drawRange.count = 3
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)

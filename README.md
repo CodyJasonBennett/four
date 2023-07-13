@@ -155,151 +155,6 @@ renderer.render(mesh, camera)
 
 </details>
 
-<hr />
-
-In four, a camera is optional and not needed for fullscreen effects. The following renders a red fullscreen triangle:
-
-<details>
-
-<summary>Show WebGL example</summary>
-
-```ts
-import { WebGLRenderer, Geometry, Material, Mesh } from 'four'
-
-const renderer = new WebGLRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.canvas)
-
-const geometry = new Geometry({
-  position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
-})
-const material = new Material({
-  vertex: /* glsl */ `#version 300 es
-    in vec3 position;
-    void main() {
-      gl_Position = vec4(position, 1);
-    }
-  `,
-  fragment: /* glsl */ `#version 300 es
-    out lowp vec4 color;
-    void main() {
-      color = vec4(1, 0, 0, 1);
-    }
-  `,
-})
-const mesh = new Mesh(geometry, material)
-
-renderer.render(mesh)
-```
-
-</details>
-
-<details>
-
-<summary>Show WebGPU example</summary>
-
-```ts
-import { WebGPURenderer, Geometry, Material, Mesh } from 'four'
-
-const renderer = new WebGPURenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.canvas)
-
-const geometry = new Geometry({
-  position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) },
-})
-const material = new Material({
-  vertex: /* wgsl */ `
-    @vertex
-    fn main(@location(0) position: vec3<f32>) -> @builtin(position) vec4<f32> {
-      return vec4(position, 1);
-    }
-  `,
-  fragment: /* wgsl */ `
-    @fragment
-    fn main() -> @location(0) vec4<f32> {
-      return vec4(1, 0, 0, 1);
-    }
-  `,
-})
-const mesh = new Mesh(geometry, material)
-
-renderer.render(mesh)
-```
-
-</details>
-
-<hr />
-
-Vertex data or geometry are also optional for drawing. The following renders 3 vertices and computes everything in shaders:
-
-<details>
-
-<summary>Show WebGL example</summary>
-
-```ts
-import { WebGLRenderer, Material, Mesh } from 'four'
-
-const renderer = new WebGLRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.canvas)
-
-const material = new Material({
-  vertex: /* glsl */ `#version 300 es
-    void main() {
-      const vec2 position[3] = vec2[](vec2(-1), vec2(3, -1), vec2(-1, 3));
-      gl_Position = vec4(position[gl_VertexID], 0, 1);
-    }
-  `,
-  fragment: /* glsl */ `#version 300 es
-    out lowp vec4 color;
-    void main() {
-      color = vec4(1, 0, 0, 1);
-    }
-  `,
-})
-const mesh = new Mesh()
-mesh.material = material
-
-renderer.render(mesh)
-```
-
-</details>
-
-<details>
-
-<summary>Show WebGPU example</summary>
-
-```ts
-import { WebGPURenderer, Material, Mesh } from 'four'
-
-const renderer = new WebGPURenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.canvas)
-
-const material = new Material({
-  vertex: /* wgsl */ `
-    @vertex
-    fn main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
-      const position = array<vec2<f32>, 3>(vec2(-1), vec2(3, -1), vec2(-1, 3));
-      return vec4(position[i], 0, 1);
-    }
-  `,
-  fragment: /* wgsl */ `
-    @fragment
-    fn main() -> @location(0) vec4<f32> {
-      return vec4(1, 0, 0, 1);
-    }
-  `,
-})
-const mesh = new Mesh()
-mesh.material = material
-
-renderer.render(mesh)
-```
-
-</details>
-
 ## Object3D
 
 An `Object3D` represents a basic 3D object and its transforms. Objects are linked via their `parent` and `children` properties, constructing a rooted scene-graph.
@@ -365,6 +220,13 @@ const geometry = new Geometry({
   uv: { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) },
   index: { size: 1, data: new Uint16Array([0, 1, 2]) },
 })
+```
+
+A `DrawRange` can also be configured to control rendering without submitting vertex data. This is useful for GPU-computed geometry or vertex pulling, as demonstrated in the fullscreen demos.
+
+```ts
+const geometry = new Geometry()
+geometry.drawRange = { start: 0, count: 3 } // renders 3 vertices at starting index 0
 ```
 
 ### Attribute

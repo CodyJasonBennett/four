@@ -4,7 +4,7 @@ import type { Camera } from './Camera'
 import { Mesh, type Mode } from './Mesh'
 import type { Object3D } from './Object3D'
 import { type RenderTarget } from './RenderTarget'
-import { Compiled } from './_utils'
+import { Compiled, min } from './_utils'
 import type { Attribute, AttributeData, Geometry } from './Geometry'
 import type { Material, Side, Uniform } from './Material'
 import { Texture } from './Texture'
@@ -623,8 +623,9 @@ export class WebGPURenderer {
 
       // Alternate drawing for indexed and non-indexed children
       const { index, position } = node.geometry.attributes
-      if (index) this._passEncoder.drawIndexed(index.data.length / index.size, node.instances)
-      else if (position) this._passEncoder.draw(position.data.length / position.size, node.instances)
+      const { start, count } = node.geometry.drawRange
+      if (index) this._passEncoder.drawIndexed(min(count, index.data.length / index.size), node.instances, start)
+      else if (position) this._passEncoder.draw(min(count, position.data.length / position.size), node.instances, start)
       else this._passEncoder.draw(3, node.instances)
     }
 

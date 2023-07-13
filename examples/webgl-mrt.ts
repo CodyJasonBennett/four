@@ -20,7 +20,7 @@ const compute = new Mesh(
       }
     `,
     fragment: /* glsl */ `#version 300 es
-      precision highp float;
+      precision lowp float;
 
       layout(location = 0) out vec4 color0;
       layout(location = 1) out vec4 color1;
@@ -64,7 +64,7 @@ const composite = new Mesh(
       }
     `,
     fragment: /* glsl */ `#version 300 es
-      precision highp float;
+      precision lowp float;
 
       uniform sampler2D texture0;
       uniform sampler2D texture1;
