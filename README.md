@@ -47,7 +47,7 @@ This will install `fourwastaken` as `four`; both will be available.
 import * as FOUR from 'four'
 ```
 
-> **Warning** Vite may have issues consuming WebGPU code which relies on top-level await via ESM. This is well supported since 2021, but you may need to use [vite-plugin-top-level-await](https://github.com/Menci/vite-plugin-top-level-await) to use this library with `vite.optimizeDeps`.
+> Vite may have issues consuming WebGPU code which relies on top-level await via ESM. This is well supported since 2021, but you may need to use [vite-plugin-top-level-await](https://github.com/Menci/vite-plugin-top-level-await) to use this library with `vite.optimizeDeps`.
 
 ## Getting Started
 
