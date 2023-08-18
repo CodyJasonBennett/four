@@ -1,4 +1,4 @@
-[![Size](https://img.shields.io/badge/dynamic/json?style=flat&colorA=000000&colorB=000000&label=gzip&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=fourwastaken)](https://unpkg.com/fourwastaken)
+[![Size](https://img.shields.io/badge/dynamic/json?label=gzip&style=flat&colorA=000000&colorB=000000&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=fourwastaken)](https://unpkg.com/fourwastaken)
 [![Version](https://img.shields.io/npm/v/fourwastaken?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 [![Downloads](https://img.shields.io/npm/dt/fourwastaken.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 
@@ -33,15 +33,27 @@ Minimal three.js alternative.
 
 ## Installation
 
-To install, use your preferred package manager:
+To install, use your preferred package manager or CDN:
+
+```bash
+npm install fourwastaken
+yarn add fourwastaken
+pnpm add fourwastaken
+```
+
+```html
+<script type="module">
+  import * as FOUR from 'https://unpkg.com/fourwastaken'
+</script>
+```
+
+You can optionally install under the `four` alias:
 
 ```bash
 npm install four@npm:fourwastaken
 yarn add four@npm:fourwastaken
 pnpm add four@npm:fourwastaken
 ```
-
-This will install `fourwastaken` as `four`; both will be available.
 
 ```ts
 import * as FOUR from 'four'
