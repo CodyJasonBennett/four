@@ -36,27 +36,15 @@ Minimal three.js alternative.
 To install, use your preferred package manager or CDN:
 
 ```bash
-npm install fourwastaken
-yarn add fourwastaken
-pnpm add fourwastaken
+npm install four@npm:fourwastaken
+yarn add four@npm:fourwastaken
+pnpm add four@npm:fourwastaken
 ```
 
 ```html
 <script type="module">
   import * as FOUR from 'https://unpkg.com/fourwastaken'
 </script>
-```
-
-You can optionally install under the `four` alias:
-
-```bash
-npm install four@npm:fourwastaken
-yarn add four@npm:fourwastaken
-pnpm add four@npm:fourwastaken
-```
-
-```ts
-import * as FOUR from 'four'
 ```
 
 > **Note**: Vite may have issues consuming WebGPU code which relies on top-level await via ESM. This is well supported since 2021, but you may need to use [vite-plugin-top-level-await](https://github.com/Menci/vite-plugin-top-level-await) to use this library with `vite.optimizeDeps`.
