@@ -1,4 +1,4 @@
-[![Size](https://img.shields.io/bundlephobia/minzip/fourwastaken?label=gzip&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/package/fourwastaken)
+[![Size](https://img.shields.io/badge/dynamic/json?style=flat&colorA=000000&colorB=000000&label=gzip&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=fourwastaken)](https://unpkg.com/fourwastaken)
 [![Version](https://img.shields.io/npm/v/fourwastaken?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 [![Downloads](https://img.shields.io/npm/dt/fourwastaken.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 
