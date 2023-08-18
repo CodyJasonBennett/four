@@ -1,4 +1,4 @@
-[![Size](https://img.shields.io/bundlephobia/minzip/fourwastaken?label=gzip&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/package/fourwastaken)
+[![Size](https://img.shields.io/badge/dynamic/json?label=gzip&style=flat&colorA=000000&colorB=000000&query=$.size.compressedSize&url=https://deno.bundlejs.com/?q=fourwastaken)](https://unpkg.com/fourwastaken)
 [![Version](https://img.shields.io/npm/v/fourwastaken?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 [![Downloads](https://img.shields.io/npm/dt/fourwastaken.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/fourwastaken)
 
@@ -33,7 +33,7 @@ Minimal three.js alternative.
 
 ## Installation
 
-To install, use your preferred package manager:
+To install, use your preferred package manager or CDN:
 
 ```bash
 npm install four@npm:fourwastaken
@@ -41,10 +41,10 @@ yarn add four@npm:fourwastaken
 pnpm add four@npm:fourwastaken
 ```
 
-This will install `fourwastaken` as `four`; both will be available.
-
-```ts
-import * as FOUR from 'four'
+```html
+<script type="module">
+  import * as FOUR from 'https://unpkg.com/fourwastaken'
+</script>
 ```
 
 > **Note**: Vite may have issues consuming WebGPU code which relies on top-level await via ESM. This is well supported since 2021, but you may need to use [vite-plugin-top-level-await](https://github.com/Menci/vite-plugin-top-level-await) to use this library with `vite.optimizeDeps`.
