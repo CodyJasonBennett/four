@@ -52,26 +52,29 @@ function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
   const values = uniforms as Exclude<Uniform, Texture>[]
 
   // Init buffer
+  let offset = 0
   if (!buffer) {
-    const length = pad4(
-      values.reduce(
-        (n: number, u) => n + (typeof u === 'number' ? 1 : u.length <= 2 ? pad2(u.length) : pad4(u.length)),
-        0,
-      ),
-    )
-    buffer = new Float32Array(length)
+    for (const value of values) {
+      if (typeof value === 'number') {
+        offset++ // leave empty space to stack primitives
+      } else {
+        const pad = value.length <= 2 ? pad2 : pad4
+        offset = pad(offset) // fill in empty space
+        offset += pad(value.length)
+      }
+    }
+    offset = pad4(offset) // align to 4 bytes
+    buffer = new Float32Array(offset)
   }
 
   // Pack buffer
-  let offset = 0
+  offset = 0
   for (const value of values) {
     if (typeof value === 'number') {
-      buffer[offset] = value
-      offset += 1 // leave empty space to stack primitives
+      buffer[offset++] = value
     } else {
       const pad = value.length <= 2 ? pad2 : pad4
-      offset = pad(offset) // fill in empty space
-      buffer.set(value, offset)
+      buffer.set(value, (offset = pad(offset)))
       offset += pad(value.length)
     }
   }
