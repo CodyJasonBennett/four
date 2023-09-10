@@ -360,9 +360,9 @@ export class WebGPURenderer {
           {
             shaderLocation: shaderLocation++,
             offset: 0,
-            format: `${formatName}x${Math.min(attribute.size, 4)}`,
+            format: `${formatName}x${Math.min(attribute.size, 4)}` as GPUVertexFormat,
           },
-        ] as Iterable<GPUVertexAttribute>,
+        ] satisfies GPUVertexAttribute[] as Iterable<GPUVertexAttribute>,
       })
     }
 
