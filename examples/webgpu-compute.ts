@@ -17,12 +17,10 @@ const computeMaterial = new Material({
     @group(0) @binding(1)
     var<storage, read_write> uv: array<vec2<f32>>;
 
-    const vertex = array<vec2<f32>, 3>(vec2(-1), vec2(3, -1), vec2(-1, 3));
-
     @compute @workgroup_size(64)
     fn main(@builtin(local_invocation_index) i: u32) {
-      position[i] = vertex[i];
-      uv[i] = abs(vertex[i]) - 1.0;
+      uv[i] = vec2<f32>(vec2((i << 1) & 2, i & 2));
+      position[i] = uv[i] * 2 - 1;
     }
   `,
 })

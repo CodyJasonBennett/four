@@ -11,14 +11,12 @@ const geometry = new Geometry({
 
 const computeMaterial = new Material({
   compute: /* glsl */ `#version 300 es
-    out vec2 position;
     out vec2 uv;
-
-    const vec2 vertex[3] = vec2[](vec2(-1), vec2(3, -1), vec2(-1, 3));
+    out vec2 position;
 
     void main() {
-      position = vertex[gl_VertexID];
-      uv = abs(position) - 1.0;
+      uv = vec2(gl_VertexID << 1 & 2, gl_VertexID & 2);
+      position = uv * 2.0 - 1.0;
     }
   `,
 })

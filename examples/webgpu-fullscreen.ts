@@ -21,13 +21,11 @@ const material = new Material({
       @location(1) uv: vec2<f32>,
     };
 
-    const triangle = array<vec2<f32>, 3>(vec2(-1), vec2(3, -1), vec2(-1, 3));
-
     @vertex
     fn main(@builtin(vertex_index) i: u32) -> VertexOut {
       var out: VertexOut;
-      out.position = vec4(triangle[i], 0, 1);
-      out.uv = abs(out.position.xy) - 1.0;
+      out.uv = vec2<f32>(vec2((i << 1) & 2, i & 2));
+      out.position = vec4(out.uv * 2 - 1, 0, 1);
       out.color = vec4(0.5 + 0.3 * cos(vec3(out.uv, 0.0) + uniforms.time), 0.0);
       return out;
     }
