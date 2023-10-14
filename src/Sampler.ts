@@ -36,6 +36,12 @@ export interface SamplerOptions {
    * Flags this sampler for update. Default is `true`.
    */
   needsUpdate: boolean
+  /**
+   * Whether to generate mipmaps for increased perceived quality (WebGL only). Default is `true`.
+   *
+   * **Note**: this is not implemented in WebGPU. See https://github.com/gpuweb/gpuweb/issues/386.
+   */
+  generateMipmaps: boolean
 }
 
 /**
@@ -47,7 +53,8 @@ export class Sampler implements SamplerOptions {
   public wrapS: Wrapping = 'clamp'
   public wrapT: Wrapping = 'clamp'
   public anisotropy: number = 1
-  public needsUpdate = true
+  public generateMipmaps: boolean = true
+  public needsUpdate: boolean = true
 
   constructor(options?: Partial<SamplerOptions>) {
     if (options) Object.assign(this, options)

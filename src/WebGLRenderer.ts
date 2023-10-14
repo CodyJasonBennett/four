@@ -48,6 +48,14 @@ const GL_FILTERS: Record<Filter, number> = {
   linear: GL_LINEAR,
 } as const
 
+const GL_LINEAR_MIPMAP_NEAREST = 0x2701
+const GL_NEAREST_MIPMAP_LINEAR = 0x2702
+
+const GL_MIPMAP_FILTERS: Record<Filter, number> = {
+  nearest: GL_LINEAR_MIPMAP_NEAREST,
+  linear: GL_NEAREST_MIPMAP_LINEAR,
+} as const
+
 const GL_REPEAT = 0x2901
 const GL_CLAMP_TO_EDGE = 0x812f
 const GL_MIRRORED_REPEAT = 0x8370
@@ -266,8 +274,9 @@ export class WebGLRenderer {
           this.gl.samplerParameteri(target, anisotropyExt.TEXTURE_MAX_ANISOTROPY_EXT, sampler.anisotropy)
       }
 
+      const MIN_FILTERS = sampler.generateMipmaps ? GL_MIPMAP_FILTERS : GL_FILTERS
       this.gl.samplerParameteri(target, GL_TEXTURE_MAG_FILTER, GL_FILTERS[sampler.magFilter])
-      this.gl.samplerParameteri(target, GL_TEXTURE_MIN_FILTER, GL_FILTERS[sampler.minFilter])
+      this.gl.samplerParameteri(target, GL_TEXTURE_MIN_FILTER, MIN_FILTERS[sampler.minFilter])
 
       this.gl.samplerParameteri(target, GL_TEXTURE_WRAP_S, GL_WRAPPINGS[sampler.wrapS])
       this.gl.samplerParameteri(target, GL_TEXTURE_WRAP_T, GL_WRAPPINGS[sampler.wrapT])
@@ -305,7 +314,11 @@ export class WebGLRenderer {
       if (!(texture.image instanceof HTMLVideoElement)) texture.needsUpdate = false
     }
 
-    this._updateSampler(texture.sampler)
+    if (texture.needsUpdate || texture.sampler.needsUpdate) {
+      if (texture.sampler.generateMipmaps) this.gl.generateMipmap(GL_TEXTURE_2D)
+
+      this._updateSampler(texture.sampler)
+    }
 
     return target
   }
