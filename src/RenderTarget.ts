@@ -1,3 +1,4 @@
+import { Sampler } from './Sampler'
 import { Texture } from './Texture'
 import { ARRAY_TYPE } from './_utils'
 
@@ -8,7 +9,11 @@ export class RenderTarget {
   /**
    * A {@link Texture} array to write color attachments to.
    */
-  readonly textures: Texture[] = []
+  readonly textures: Texture[]
+  /**
+   * A {@link Sampler} used for sampling texture attachments.
+   */
+  public sampler: Sampler = new Sampler({ generateMipmaps: false })
   /**
    * Used internally to flag for update on resize. Default is `true`.
    */
@@ -28,7 +33,7 @@ export class RenderTarget {
      */
     readonly count: number = 1,
   ) {
-    this.textures = ARRAY_TYPE.from({ length: count }, () => new Texture())
+    this.textures = ARRAY_TYPE.from({ length: count }, () => new Texture(undefined, this.sampler))
   }
 
   /**
