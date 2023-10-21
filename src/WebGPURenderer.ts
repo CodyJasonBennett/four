@@ -290,8 +290,8 @@ export class WebGPURenderer {
    */
   private _updateTexture(
     texture: Texture,
-    width = texture.image?.width ?? 0,
-    height = texture.image?.height ?? 0,
+    width = (texture.image as any)?.width ?? 0,
+    height = (texture.image as any)?.height ?? 0,
   ): GPUTexture | GPUExternalTexture {
     let target = this._textures.get(texture)
     if (!target || texture.needsUpdate) {

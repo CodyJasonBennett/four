@@ -386,7 +386,7 @@ A `Texture` transports or stores image or video data to the GPU as well as data 
 
 ```ts
 const pixel = new Uint8ClampedArray([76, 51, 128, 255])
-const image = await createImageBitmap(new ImageData(pixel, 1, 1))
+const image = new ImageData(pixel, 1, 1)
 const texture = new Texture(image)
 ```
 
