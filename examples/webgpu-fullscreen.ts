@@ -1,4 +1,4 @@
-import { WebGPURenderer, Geometry, Material, Mesh, Texture } from 'four'
+import { WebGPURenderer, Material, Mesh, Texture } from 'four'
 
 const renderer = new WebGPURenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -7,7 +7,7 @@ document.body.appendChild(renderer.canvas)
 const material = new Material({
   uniforms: {
     time: 0,
-    color: new Texture(await createImageBitmap(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1))),
+    color: new Texture(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1)),
   },
   vertex: /* wgsl */ `
     struct Uniforms {

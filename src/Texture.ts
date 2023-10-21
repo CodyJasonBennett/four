@@ -3,7 +3,14 @@ import { Sampler } from './Sampler'
 /**
  * Represents a texture image source.
  */
-export type ImageRepresentation = ImageBitmap | HTMLCanvasElement | HTMLVideoElement | OffscreenCanvas
+export type ImageRepresentation =
+  | ImageBitmap
+  | ImageData
+  | HTMLImageElement
+  | HTMLVideoElement
+  | VideoFrame
+  | HTMLCanvasElement
+  | OffscreenCanvas
 
 /**
  * Constructs a texture. Useful for displaying and storing image data.
