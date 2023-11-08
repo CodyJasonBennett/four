@@ -575,7 +575,7 @@ mesh.instances = 2
 
 ### Compute
 
-Four supports compute for both WebGL and WebGPU via transform feedback and compute pipelines, respectively. This can be used in lieu of pixel shaders to write directly to buffer storage without any CPU reads/writes to textures. Useful for high precision compute or large simulations where VRAM is limited.
+Four supports compute for both WebGL and WebGPU via transform feedback and compute pipelines, respectively. This can be used in lieu of pixel shaders to write directly to buffer storage without any CPU reads/writes to textures. Useful for high precision compute or large simulations where texture memory is limited.
 
 The following populates geometry buffers on the GPU, computing a fullscreen triangle geometry:
 
