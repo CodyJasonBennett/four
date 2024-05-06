@@ -115,7 +115,7 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
  */
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
-const _adapter = typeof navigator !== 'undefined' && (await navigator.gpu?.requestAdapter())
+const _adapter = typeof navigator !== 'undefined' ? (await navigator.gpu?.requestAdapter()) : null;
 const _device = await (_adapter as GPUAdapter | null)?.requestDevice()
 
 /**
