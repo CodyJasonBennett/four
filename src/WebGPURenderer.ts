@@ -488,7 +488,11 @@ export class WebGPURenderer {
         UBO = { data, buffer }
         // TODO: allow UBOs to be separated for larger scenes and global/camera/object states
         this._UBOs.set(mesh, UBO)
-        this._UBOs.set(mesh.material as unknown as Mesh & { dispose: () => void }, UBO, () => buffer.destroy()) // ensure memory is destroyed with material
+        // Ensure memory is destroyed with material even though we want to track it per-mesh
+        this._UBOs.set(mesh.material as unknown as Mesh & { dispose: () => void }, UBO, () => {
+          this._UBOs.delete(mesh)
+          buffer.destroy()
+        })
       } else {
         this._writeBuffer(UBO.buffer, std140(uniforms, UBO.data))
       }
