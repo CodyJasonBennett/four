@@ -26,12 +26,12 @@
   "exports": "./dist/index.js",
   "sideEffects": false,
   "devDependencies": {
-    "@types/node": "^20.8.7",
-    "typescript": "^5.2.2",
-    "vite": "^4.5.0"
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.5"
   },
   "dependencies": {
-    "@webgpu/types": "^0.1.38"
+    "@webgpu/types": "^0.1.60"
   },
   "scripts": {
     "dev": "vite",
