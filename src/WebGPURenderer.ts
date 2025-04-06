@@ -115,7 +115,7 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
  */
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
-const _adapter = typeof navigator !== 'undefined' ? (await navigator.gpu?.requestAdapter()) : null;
+const _adapter = typeof navigator !== 'undefined' ? await navigator.gpu?.requestAdapter() : null
 const _device = await (_adapter as GPUAdapter | null)?.requestDevice()
 
 /**
@@ -171,7 +171,7 @@ export class WebGPURenderer {
 
   private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
-  private _UBOs = new Compiled<Material, { data: Float32Array; buffer: GPUBuffer }>()
+  private _UBOs = new Compiled<Mesh, { data: Float32Array; buffer: GPUBuffer }>()
   private _pipelines = new Compiled<Mesh, GPURenderPipeline | GPUComputePipeline>()
   private _textures = new Compiled<Texture, GPUTexture | GPUExternalTexture>()
   private _samplers = new Compiled<Sampler, GPUSampler>()
@@ -481,12 +481,18 @@ export class WebGPURenderer {
     const parsed = parseUniforms(mesh.material.vertex, mesh.material.fragment, mesh.material.compute)
     if (parsed) {
       const uniforms = parsed.map((key) => mesh.material.uniforms[key])
-      let UBO = this._UBOs.get(mesh.material)
+      let UBO = this._UBOs.get(mesh)
       if (!UBO) {
         const data = std140(uniforms)
         const buffer = this._createBuffer(data, GPU_BUFFER_USAGE_UNIFORM)
         UBO = { data, buffer }
-        this._UBOs.set(mesh.material, UBO, () => buffer.destroy())
+        // TODO: allow UBOs to be separated for larger scenes and global/camera/object states
+        this._UBOs.set(mesh, UBO)
+        // Ensure memory is destroyed with material even though we want to track it per-mesh
+        this._UBOs.set(mesh.material as unknown as Mesh & { dispose: () => void }, UBO, () => {
+          this._UBOs.delete(mesh)
+          buffer.destroy()
+        })
       } else {
         this._writeBuffer(UBO.buffer, std140(uniforms, UBO.data))
       }
