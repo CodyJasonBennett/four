@@ -263,7 +263,13 @@ export class WebGPURenderer {
     dstByteOffset = data.byteOffset,
   ): void {
     const size = data.BYTES_PER_ELEMENT
-    this.device.queue.writeBuffer(buffer, dstByteOffset, data, srcByteOffset / size, byteLength / size)
+    this.device.queue.writeBuffer(
+      buffer,
+      dstByteOffset,
+      data as ArrayBufferView<ArrayBuffer>,
+      srcByteOffset / size,
+      byteLength / size,
+    )
   }
 
   /**

@@ -239,10 +239,10 @@
   dependencies:
     undici-types "~6.21.0"
 
-"@webgpu/types@^0.1.60":
-  version "0.1.60"
-  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.60.tgz#4f58e763ce060a81b03ab7ee1ad879c7024923fd"
-  integrity sha512-8B/tdfRFKdrnejqmvq95ogp8tf52oZ51p3f4QD5m5Paey/qlX4Rhhy5Y8tgFMi7Ms70HzcMMw3EQjH/jdhTwlA==
+"@webgpu/types@^0.1.68":
+  version "0.1.68"
+  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.68.tgz#7c1017f42595fbd596f0804c2aec139449a379f3"
+  integrity sha512-3ab1B59Ojb6RwjOspYLsTpCzbNB3ZaamIAxBMmvnNkiDoLTZUOBXZ9p5nAYVEkQlDdf6qAZWi1pqj9+ypiqznA==
 
 esbuild@^0.25.0:
   version "0.25.2"
