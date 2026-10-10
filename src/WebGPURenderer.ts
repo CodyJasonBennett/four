@@ -115,8 +115,9 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
  */
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
-const _adapter = typeof navigator !== 'undefined' ? await navigator.gpu?.requestAdapter() : null
-const _device = await (_adapter as GPUAdapter | null)?.requestDevice()
+// Eagerly create GPUDevice in client-like environments so renderer can have a synchronous constructor
+const _device = /* @__PURE__ */ await (async () =>
+  (typeof navigator !== 'undefined' ? await navigator.gpu?.requestAdapter() : null)?.requestDevice())()
 
 /**
  * {@link WebGPURenderer} constructor parameters.
@@ -368,7 +369,7 @@ export class WebGPURenderer {
             offset: 0,
             format: `${formatName}x${Math.min(attribute.size, 4)}` as GPUVertexFormat,
           },
-        ] satisfies GPUVertexAttribute[] as Iterable<GPUVertexAttribute>,
+        ],
       })
     }
 
@@ -438,7 +439,7 @@ export class WebGPURenderer {
       }
       this._pipelines.set(mesh, pipeline)
     }
-    this._passEncoder.setPipeline(pipeline as any)
+    ;(this._passEncoder as GPURenderPassEncoder).setPipeline(pipeline as GPURenderPipeline)
 
     let slot = 0
     for (const key in mesh.geometry.attributes) {
