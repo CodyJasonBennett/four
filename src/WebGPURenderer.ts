@@ -116,7 +116,7 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
 // Eagerly create GPUDevice in client-like environments so renderer can have a synchronous constructor
-const _device = /* @__PURE__ */ await (async () =>
+const _device = await /* @__PURE__ */ (async () =>
   (typeof navigator !== 'undefined' ? await navigator.gpu?.requestAdapter() : null)?.requestDevice())()
 
 /**
