@@ -30,6 +30,7 @@
     "vite": "^6.2.5"
   },
   "dependencies": {
+    "@types/node": "^26.6.5",
     "@webgpu/types": "^0.1.74"
   },
   "scripts": {
