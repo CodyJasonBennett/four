@@ -1,13 +1,22 @@
 import { WebGPURenderer, Material, Mesh, Texture } from 'four'
 
-const renderer = new WebGPURenderer()
+const adapter = (await navigator.gpu.requestAdapter())!
+const device = (await adapter.requestDevice({ requiredFeatures: ['float32-filterable'] }))!
+
+const renderer = new WebGPURenderer({ device })
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.canvas)
 
 const material = new Material({
   uniforms: {
     time: 0,
-    color: new Texture(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1)),
+    color: Object.assign(
+      new Texture(new Float32Array([76, 51, 128, 255].map((n) => n / 255)), undefined, 'rgba32float'),
+      {
+        width: 1,
+        height: 1,
+      },
+    ),
   },
   vertex: /* wgsl */ `
     struct Uniforms {

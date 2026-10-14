@@ -4,6 +4,7 @@ import { Sampler } from './Sampler'
  * Represents a texture image source.
  */
 export type ImageRepresentation =
+  | ArrayBufferView
   | ImageBitmap
   | ImageData
   | HTMLImageElement
@@ -12,10 +13,15 @@ export type ImageRepresentation =
   | HTMLCanvasElement
   | OffscreenCanvas
 
+type ImageLike = { width: number; height: number }
+
 /**
  * Constructs a texture. Useful for displaying and storing image data.
  */
 export class Texture {
+  public width: number
+  public height: number
+
   constructor(
     /**
      * An image source to set this texture to.
@@ -37,7 +43,10 @@ export class Texture {
      * Flags this texture for update. Default is `true`.
      */
     public needsUpdate: boolean = true,
-  ) {}
+  ) {
+    this.width = (this.image as ImageLike | undefined)?.width ?? 0
+    this.height = (this.image as ImageLike | undefined)?.height ?? 0
+  }
 
   /**
    * Disposes texture from GPU memory.

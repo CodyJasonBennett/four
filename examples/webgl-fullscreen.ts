@@ -7,7 +7,18 @@ document.body.appendChild(renderer.canvas)
 const material = new Material({
   uniforms: {
     time: 0,
-    color: new Texture(new ImageData(new Uint8ClampedArray([76, 51, 128, 255]), 1, 1)),
+    color: Object.assign(
+      new Texture(
+        new Float32Array([76, 51, 128, 255].map((n) => n / 255)),
+        undefined,
+        renderer.gl.RGBA32F,
+        renderer.gl.FLOAT,
+      ),
+      {
+        width: 1,
+        height: 1,
+      },
+    ),
   },
   vertex: /* glsl */ `#version 300 es
     out vec2 vUv;

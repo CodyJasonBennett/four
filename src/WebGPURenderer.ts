@@ -299,8 +299,8 @@ export class WebGPURenderer {
    */
   private _updateTexture(
     texture: Texture,
-    width = (texture.image as any)?.width ?? 0,
-    height = (texture.image as any)?.height ?? 0,
+    width = texture.width,
+    height = texture.height,
   ): GPUTexture | GPUExternalTexture {
     let target = this._textures.get(texture)
     if (!target || texture.needsUpdate) {
@@ -320,7 +320,17 @@ export class WebGPURenderer {
             GPU_TEXTURE_USAGE_COPY_SRC,
         })
 
-        if (texture.image) {
+        if (ArrayBuffer.isView(texture.image)) {
+          this.device.queue.writeTexture(
+            { texture: target },
+            texture.image,
+            {
+              bytesPerRow: width * 4 * Float32Array.BYTES_PER_ELEMENT, // TODO: row size should be derived from format
+              rowsPerImage: height,
+            },
+            [width, height],
+          )
+        } else if (texture.image) {
           this.device.queue.copyExternalImageToTexture({ source: texture.image }, { texture: target }, [width, height])
         }
 

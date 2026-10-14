@@ -342,7 +342,7 @@ export class WebGLRenderer {
   /**
    * Updates a texture with an optional `width` and `height`.
    */
-  private _updateTexture(texture: Texture, width = 0, height = 0): WebGLTexture {
+  private _updateTexture(texture: Texture, width = texture.width, height = texture.height): WebGLTexture {
     let target = this._textures.get(texture)!
     if (!target) {
       target = this.gl.createTexture()!
@@ -359,7 +359,9 @@ export class WebGLRenderer {
       const format = getPixelFormat(internalFormat)
       const type = texture.type ?? GL_UNSIGNED_BYTE
 
-      if (texture.image) {
+      if (ArrayBuffer.isView(texture.image)) {
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, texture.image)
+      } else if (texture.image) {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, format, type, texture.image)
       } else {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null)
