@@ -177,12 +177,19 @@ export class OrbitControls {
   }
 
   /**
+   * Manually updates the camera based on configured orbital coordinates.
+   */
+  update(): void {
+    this._camera.lookAt(this.center)
+  }
+
+  /**
    * Connects controls' event handlers, enabling interaction.
    */
   connect(element: HTMLElement): void {
     if (this._element) this.disconnect(this._element)
     element.addEventListener('contextmenu', this._onContextMenu)
-    element.addEventListener('wheel', this._onScroll, { passive: true })
+    element.addEventListener('wheel', this._onScroll)
     element.addEventListener('pointermove', this._onPointerMove)
     element.addEventListener('pointerup', this._onPointerUp)
     element.addEventListener('keydown', this._onKeyDown)
