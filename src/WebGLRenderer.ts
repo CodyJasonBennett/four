@@ -438,7 +438,6 @@ export class WebGLRenderer {
   setCullSide(side: Side = 'both'): void {
     if (side === 'both') {
       this.gl.disable(GL_CULL_FACE)
-      this.gl.disable(GL_DEPTH_TEST)
     } else {
       this.gl.enable(GL_CULL_FACE)
       this.gl.cullFace(side === 'front' ? GL_BACK : GL_FRONT)
