@@ -16,7 +16,6 @@ const GL_TEXTURE_MAG_FILTER = 0x2800
 const GL_TEXTURE_MIN_FILTER = 0x2801
 const GL_TEXTURE_WRAP_S = 0x2802
 const GL_TEXTURE_WRAP_T = 0x2803
-const GL_RGBA = 0x1908
 const GL_DEPTH_TEST = 0x0b71
 const GL_CULL_FACE = 0x0b44
 const GL_BLEND = 0x0be2
@@ -121,7 +120,7 @@ const GL_UNSIGNED_INT = 0x1405
 /**
  * Gets the appropriate WebGL data type for a data view.
  */
-const getDataType = (data: ArrayBufferView): number | null => {
+function getDataType(data: ArrayBufferView): number | null {
   switch (data.constructor) {
     case Float32Array:
       return GL_FLOAT
@@ -140,6 +139,56 @@ const getDataType = (data: ArrayBufferView): number | null => {
       return GL_UNSIGNED_INT
     default:
       return null
+  }
+}
+
+const GL_R8 = 0x8229
+const GL_R16F = 0x822d
+const GL_R32F = 0x822e
+const GL_RED = 0x1903
+
+const GL_RG8 = 0x822b
+const GL_RG16F = 0x822f
+const GL_RG32F = 0x8230
+const GL_RG = 0x8227
+
+const GL_RGB8 = 0x8051
+const GL_RGB16F = 0x881b
+const GL_RGB32F = 0x8815
+const GL_RGB = 0x1907
+
+const GL_RGBA8 = 0x8058
+const GL_RGBA16F = 0x881a
+const GL_RGBA32F = 0x8814
+const GL_RGBA = 0x1908
+
+/**
+ * Gets the appropriate WebGL pixel format for an internal texture format.
+ */
+function getPixelFormat(format: number): number {
+  switch (format) {
+    case GL_R8:
+    case GL_R16F:
+    case GL_R32F:
+      return GL_RED
+
+    case GL_RG8:
+    case GL_RG16F:
+    case GL_RG32F:
+      return GL_RG
+
+    case GL_RGB8:
+    case GL_RGB16F:
+    case GL_RGB32F:
+      return GL_RGB
+
+    case GL_RGBA8:
+    case GL_RGBA16F:
+    case GL_RGBA32F:
+      return GL_RGBA
+
+    default:
+      return format
   }
 }
 
@@ -245,6 +294,9 @@ export class WebGLRenderer {
         premultipliedAlpha: true,
         ...rest,
       })!
+    this.gl.getExtension('EXT_color_buffer_float')
+    this.gl.getExtension('EXT_color_buffer_half_float')
+    this.gl.getExtension('OES_texture_float_linear')
   }
 
   /**
@@ -303,12 +355,14 @@ export class WebGLRenderer {
     if (texture.needsUpdate) {
       this.gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
-      const format = (texture.format as number | undefined) ?? GL_RGBA
+      const internalFormat = (texture.format as number | undefined) ?? GL_RGBA
+      const format = getPixelFormat(internalFormat)
       const type = texture.type ?? GL_UNSIGNED_BYTE
+
       if (texture.image) {
-        this.gl.texImage2D(GL_TEXTURE_2D, 0, format, format, type, texture.image)
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, format, type, texture.image)
       } else {
-        this.gl.texImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, null)
+        this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null)
       }
 
       if (!(texture.image instanceof HTMLVideoElement)) texture.needsUpdate = false
