@@ -46,9 +46,10 @@ const pad2 = (n: number) => n + (n % 2)
 const pad4 = (n: number) => n + ((4 - (n % 4)) % 4)
 
 /**
- * Packs uniforms into a std140 compliant array buffer.
+ * Packs supported uniform values into a Float32Array using WGSL-compatible alignment.
+ * https://www.w3.org/TR/WGSL/#alignment-and-size
  */
-function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
+function packUniforms(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
   const values = uniforms as Exclude<Uniform, Texture>[]
 
   // Init buffer
@@ -60,7 +61,7 @@ function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
       } else {
         const pad = value.length <= 2 ? pad2 : pad4
         offset = pad(offset) // fill in empty space
-        offset += pad(value.length)
+        offset += value.length === 3 ? 3 : pad(value.length)
       }
     }
     offset = pad4(offset) // align to 4 bytes
@@ -75,7 +76,7 @@ function std140(uniforms: Uniform[], buffer?: Float32Array): Float32Array {
     } else {
       const pad = value.length <= 2 ? pad2 : pad4
       buffer.set(value, (offset = pad(offset)))
-      offset += pad(value.length)
+      offset += value.length === 3 ? 3 : pad(value.length)
     }
   }
 
@@ -491,7 +492,7 @@ export class WebGPURenderer {
       const uniforms = parsed.map((key) => mesh.material.uniforms[key])
       let UBO = this._UBOs.get(mesh)
       if (!UBO) {
-        const data = std140(uniforms)
+        const data = packUniforms(uniforms)
         const buffer = this._createBuffer(data, GPU_BUFFER_USAGE_UNIFORM)
         UBO = { data, buffer }
         // TODO: allow UBOs to be separated for larger scenes and global/camera/object states
@@ -502,7 +503,7 @@ export class WebGPURenderer {
           buffer.destroy()
         })
       } else {
-        this._writeBuffer(UBO.buffer, std140(uniforms, UBO.data))
+        this._writeBuffer(UBO.buffer, packUniforms(uniforms, UBO.data))
       }
 
       entries.push({ binding: binding++, resource: UBO })
