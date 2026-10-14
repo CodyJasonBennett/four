@@ -59,37 +59,49 @@ export class Matrix4 extends ARRAY_TYPE<number> {
   }
 
   /**
-   * Multiplies a scalar or {@link Matrix4}.
+   * Multiplies this matrix by a scalar or {@link Matrix4}.
    */
   multiply(t: number | Matrix4): this {
     if (typeof t === 'number') {
-      for (let i = 0; i < 16; i++) {
-        this[i] *= t
-      }
-    } else {
-      const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = this
-      const [t00, t01, t02, t03, t10, t11, t12, t13, t20, t21, t22, t23, t30, t31, t32, t33] = t
-      this.set(
-        m00 * t00 + m10 * t01 + m20 * t02 + m30 * t03,
-        m01 * t00 + m11 * t01 + m21 * t02 + m31 * t03,
-        m02 * t00 + m12 * t01 + m22 * t02 + m32 * t03,
-        m03 * t00 + m13 * t01 + m23 * t02 + m33 * t03,
-        m00 * t10 + m10 * t11 + m20 * t12 + m30 * t13,
-        m01 * t10 + m11 * t11 + m21 * t12 + m31 * t13,
-        m02 * t10 + m12 * t11 + m22 * t12 + m32 * t13,
-        m03 * t10 + m13 * t11 + m23 * t12 + m33 * t13,
-        m00 * t20 + m10 * t21 + m20 * t22 + m30 * t23,
-        m01 * t20 + m11 * t21 + m21 * t22 + m31 * t23,
-        m02 * t20 + m12 * t21 + m22 * t22 + m32 * t23,
-        m03 * t20 + m13 * t21 + m23 * t22 + m33 * t23,
-        m00 * t30 + m10 * t31 + m20 * t32 + m30 * t33,
-        m01 * t30 + m11 * t31 + m21 * t32 + m31 * t33,
-        m02 * t30 + m12 * t31 + m22 * t32 + m32 * t33,
-        m03 * t30 + m13 * t31 + m23 * t32 + m33 * t33,
-      )
+      for (let i = 0; i < 16; i++) this[i] *= t
+      return this
     }
 
-    return this
+    return this._multiplyMatrices(this, t)
+  }
+
+  /**
+   * Pre-multiplies this matrix by another {@link Matrix4}.
+   */
+  premultiply(t: Matrix4): this {
+    return this._multiplyMatrices(t, this)
+  }
+
+  /**
+   * Sets this matrix to the product of two matrices.
+   */
+  private _multiplyMatrices(a: Matrix4, b: Matrix4): this {
+    const [m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33] = a
+    const [t00, t01, t02, t03, t10, t11, t12, t13, t20, t21, t22, t23, t30, t31, t32, t33] = b
+
+    return this.set(
+      m00 * t00 + m10 * t01 + m20 * t02 + m30 * t03,
+      m01 * t00 + m11 * t01 + m21 * t02 + m31 * t03,
+      m02 * t00 + m12 * t01 + m22 * t02 + m32 * t03,
+      m03 * t00 + m13 * t01 + m23 * t02 + m33 * t03,
+      m00 * t10 + m10 * t11 + m20 * t12 + m30 * t13,
+      m01 * t10 + m11 * t11 + m21 * t12 + m31 * t13,
+      m02 * t10 + m12 * t11 + m22 * t12 + m32 * t13,
+      m03 * t10 + m13 * t11 + m23 * t12 + m33 * t13,
+      m00 * t20 + m10 * t21 + m20 * t22 + m30 * t23,
+      m01 * t20 + m11 * t21 + m21 * t22 + m31 * t23,
+      m02 * t20 + m12 * t21 + m22 * t22 + m32 * t23,
+      m03 * t20 + m13 * t21 + m23 * t22 + m33 * t23,
+      m00 * t30 + m10 * t31 + m20 * t32 + m30 * t33,
+      m01 * t30 + m11 * t31 + m21 * t32 + m31 * t33,
+      m02 * t30 + m12 * t31 + m22 * t32 + m32 * t33,
+      m03 * t30 + m13 * t31 + m23 * t32 + m33 * t33,
+    )
   }
 
   /**
