@@ -26,7 +26,6 @@
   "exports": "./dist/index.js",
   "sideEffects": false,
   "devDependencies": {
-    "@types/node": "^22.14.0",
     "typescript": "^5.8.3",
     "vite": "^6.2.5"
   },

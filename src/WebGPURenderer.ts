@@ -115,9 +115,10 @@ const STORAGE_REGEX = /var\s*<\s*storage[^>]+>\s*(\w+)/g
  */
 const WORKGROUP_REGEX = /@workgroup_size\s*\(([^)]+)\)/
 
-// Eagerly create GPUDevice in client-like environments so renderer can have a synchronous constructor
-const _device = await /* @__PURE__ */ (async () =>
-  (typeof navigator !== 'undefined' ? await navigator.gpu?.requestAdapter() : null)?.requestDevice())()
+// Eagerly create GPUDevice in client-like environments so renderer can have a synchronous constructor.
+// This is not marked pure since top-level-await itself is considered an impure expression
+const _adapter = typeof navigator !== 'undefined' && 'gpu' in navigator ? await navigator.gpu.requestAdapter() : null
+const _device = _adapter ? await _adapter.requestDevice() : null
 
 /**
  * {@link WebGPURenderer} constructor parameters.
