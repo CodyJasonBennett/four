@@ -193,7 +193,7 @@ for (const node of gltf.nodes!) {
             return mix(pow(color, vec3(0.41666)) * 1.055 - vec3(0.055), color * 12.92, vec3(lessThanEqual(color, vec3(0.0031308))));
           }
 
-          const float exposure = 0.0;
+          const float exposure = 1.0;
 
           void main() {
             vec4 diffuseColor = color;
@@ -202,7 +202,7 @@ for (const node of gltf.nodes!) {
               diffuseColor = texture(albedoTexture, vUv);
               diffuseColor.rgb = sRGBTransferEOTF(diffuseColor.rgb);
             #endif
-            float alphaWidth = fwidth(diffuseColor.a);
+            float alphaWidth = max(fwidth(diffuseColor.a), 1e-5);
             diffuseColor.a = smoothstep(alphaCutoff - alphaWidth, alphaCutoff + alphaWidth, diffuseColor.a);
 
             vec3 normal = normalize(vWorldNormal);
@@ -218,7 +218,7 @@ for (const node of gltf.nodes!) {
 
             vec3 luminance = diffuseColor.rgb;
             luminance *= exp2(exposure);
-            // luminance = tonemapACES(luminance);
+            luminance = tonemapACES(luminance);
             luminance = sRGBTransferOETF(luminance);
 
             pc_fragColor = vec4(luminance, diffuseColor.a);
