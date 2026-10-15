@@ -369,14 +369,16 @@ export class WebGLRenderer {
       } else {
         this.gl.texImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, null)
       }
-
-      if (!(texture.image instanceof HTMLVideoElement)) texture.needsUpdate = false
     }
 
     if (texture.needsUpdate || texture.sampler.needsUpdate) {
       if (texture.sampler.generateMipmaps) this.gl.generateMipmap(GL_TEXTURE_2D)
 
       this._updateSampler(texture.sampler)
+    }
+
+    if (texture.needsUpdate && !(texture.image instanceof HTMLVideoElement)) {
+      texture.needsUpdate = false
     }
 
     return target
