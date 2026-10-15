@@ -257,6 +257,8 @@ export interface WebGLRendererOptions {
   powerPreference: 'default' | 'high-performance' | 'low-power'
 }
 
+const DEFAULT_FRAGMENT_SOURCE = '#version 300 es\nvoid main(){}'
+
 /**
  * Constructs a WebGL renderer object. Can be extended to draw to a canvas.
  */
@@ -274,6 +276,7 @@ export class WebGLRenderer {
    */
   public autoClear = true
   private _compiled = new Compiled<Mesh, WebGLCompiled>()
+  private _shaders = new Map<string, WebGLShader | null>()
   private _programs = new Compiled<Material, WebGLProgram>()
   private _geometry = new Compiled<Geometry, WebGLVertexArrayObject>()
   private _buffers = new Compiled<Attribute, WebGLBuffer>()
@@ -516,20 +519,35 @@ export class WebGLRenderer {
 
     let program = this._programs.get(mesh.material)
     if (!program) {
+      const vertexShaderSource = mesh.material.vertex ?? mesh.material.compute
+      let vertexShader = this._shaders.get(vertexShaderSource)
+      if (!vertexShader) {
+        vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
+        this._shaders.set(vertexShaderSource, vertexShader)
+        this.gl.shaderSource(vertexShader, vertexShaderSource)
+        this.gl.compileShader(vertexShader)
+      }
+
+      const fragmentShaderSource = mesh.material.fragment ?? DEFAULT_FRAGMENT_SOURCE
+      let fragmentShader = this._shaders.get(fragmentShaderSource)
+      if (!fragmentShader) {
+        fragmentShader = this.gl.createShader(GL_FRAGMENT_SHADER)!
+        this._shaders.set(fragmentShaderSource, fragmentShader)
+        this.gl.shaderSource(fragmentShader, fragmentShaderSource)
+        this.gl.compileShader(fragmentShader)
+      }
+
       program = this.gl.createProgram()!
-      this._programs.set(mesh.material, program, () => this.gl.deleteProgram(program!))
-
-      const vertexShader = this.gl.createShader(GL_VERTEX_SHADER)!
-      this.gl.shaderSource(vertexShader, mesh.material.vertex ?? mesh.material.compute)
-      this.gl.compileShader(vertexShader)
       this.gl.attachShader(program, vertexShader)
-
-      const fragmentShader = this.gl.createShader(GL_FRAGMENT_SHADER)!
-      this.gl.shaderSource(fragmentShader, mesh.material.fragment ?? '#version 300 es\nvoid main(){}')
-      this.gl.compileShader(fragmentShader)
       this.gl.attachShader(program, fragmentShader)
-
       this.gl.linkProgram(program)
+      this._programs.set(mesh.material, program, () => {
+        this.gl.deleteProgram(program!)
+        this.gl.deleteShader(vertexShader)
+        this.gl.deleteShader(fragmentShader)
+        this._shaders.set(vertexShaderSource, null)
+        this._shaders.set(fragmentShaderSource, null)
+      })
 
       for (const shader of [vertexShader, fragmentShader]) {
         const error = this.gl.getShaderInfoLog(shader)
@@ -538,9 +556,6 @@ export class WebGLRenderer {
 
       const error = this.gl.getProgramInfoLog(program)
       if (error) throw `${this.gl.getProgramInfoLog(program)}`
-
-      this.gl.deleteShader(vertexShader)
-      this.gl.deleteShader(fragmentShader)
     }
 
     let VAO = this._geometry.get(mesh.geometry)
