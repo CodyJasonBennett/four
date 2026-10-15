@@ -47,16 +47,23 @@ for (const node of gltf.nodes!) {
       })
 
       const materialProperties = gltf.materials![primitive.material!] ?? {}
+      const pbr = materialProperties.pbrMetallicRoughness
 
-      const [albedoTexture, normalTexture] = await Promise.all(
-        [materialProperties.pbrMetallicRoughness?.baseColorTexture, materialProperties.normalTexture].map(
-          async (textureInfo) => {
+      const [albedoTexture, metallicRoughnessTexture, normalTexture, occlusionTexture, emissiveTexture] =
+        await Promise.all(
+          [
+            pbr?.baseColorTexture,
+            pbr?.metallicRoughnessTexture,
+            materialProperties.normalTexture,
+            materialProperties.occlusionTexture,
+            materialProperties.emissiveTexture,
+          ].map(async (textureInfo) => {
             if (textureInfo == null) return null
 
             const gl = renderer.gl
             const anistropyExt = gl.getExtension('EXT_texture_filter_anisotropic')
             const sampler = new Sampler({
-              anisotropy: anistropyExt ? gl.getParameter(anistropyExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 0,
+              anisotropy: anistropyExt ? gl.getParameter(anistropyExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1,
               generateMipmaps: true,
               magFilter: 'linear',
               minFilter: 'linear',
@@ -67,15 +74,30 @@ for (const node of gltf.nodes!) {
             const image = await parseTexture(gltf, textureInfo.index)
 
             return new Texture(image, sampler)
-          },
-        ),
-      )
+          }),
+        )
+
+      const emissiveStrengthExtension = materialProperties.extensions?.KHR_materials_emissive_strength
 
       const material = new Material({
         uniforms: {
-          color: materialProperties.pbrMetallicRoughness?.baseColorFactor ?? DEFAULT_ALBEDO_COLOR,
-          ...(albedoTexture ? { albedoTexture } : undefined),
-          ...(normalTexture ? { normalTexture } : undefined),
+          color: pbr?.baseColorFactor ?? DEFAULT_ALBEDO_COLOR,
+
+          metallicFactor: pbr?.metallicFactor ?? 1,
+          roughnessFactor: pbr?.roughnessFactor ?? 1,
+
+          emissiveFactor: materialProperties.emissiveFactor ?? [0, 0, 0],
+          emissiveStrength: emissiveStrengthExtension?.emissiveStrength ?? 1,
+
+          normalScale: materialProperties.normalTexture?.scale ?? 1,
+          occlusionStrength: materialProperties.occlusionTexture?.strength ?? 1,
+
+          ...(albedoTexture ? { albedoTexture } : {}),
+          ...(metallicRoughnessTexture ? { metallicRoughnessTexture } : {}),
+          ...(normalTexture ? { normalTexture } : {}),
+          ...(occlusionTexture ? { occlusionTexture } : {}),
+          ...(emissiveTexture ? { emissiveTexture } : {}),
+
           alphaCutoff: materialProperties.alphaMode === 'MASK' ? (materialProperties.alphaCutoff ?? 0.5) : 0,
         },
         side: materialProperties.doubleSided ? 'both' : 'front',
@@ -116,19 +138,45 @@ for (const node of gltf.nodes!) {
         `,
         fragment: /* glsl */ `#version 300 es
           ${albedoTexture ? '#define USE_ALBEDO_TEXTURE' : ''}
+          ${metallicRoughnessTexture ? '#define USE_METALLIC_ROUGHNESS_TEXTURE' : ''}
           ${normalTexture ? '#define USE_NORMAL_TEXTURE' : ''}
+          ${occlusionTexture ? '#define USE_OCCLUSION_TEXTURE' : ''}
+          ${emissiveTexture ? '#define USE_EMISSIVE_TEXTURE' : ''}
 
           precision mediump float;
 
           uniform vec4 color;
+
+          uniform float metallicFactor;
+          uniform float roughnessFactor;
+
+          uniform vec3 emissiveFactor;
+          uniform float emissiveStrength;
+
+          uniform float normalScale;
+          uniform float occlusionStrength;
+
           #ifdef USE_ALBEDO_TEXTURE
             uniform sampler2D albedoTexture;
           #endif
+
+          #ifdef USE_METALLIC_ROUGHNESS_TEXTURE
+            uniform sampler2D metallicRoughnessTexture;
+          #endif
+
           #ifdef USE_NORMAL_TEXTURE
             uniform sampler2D normalTexture;
           #endif
+
+          #ifdef USE_OCCLUSION_TEXTURE
+            uniform sampler2D occlusionTexture;
+          #endif
+
+          #ifdef USE_EMISSIVE_TEXTURE
+            uniform sampler2D emissiveTexture;
+          #endif
+
           uniform float alphaCutoff;
-          uniform bool faceDirection;
 
           in vec3 vWorldPosition;
           in vec3 vWorldNormal;
@@ -199,11 +247,39 @@ for (const node of gltf.nodes!) {
             vec4 diffuseColor = color;
 
             #ifdef USE_ALBEDO_TEXTURE
-              diffuseColor = texture(albedoTexture, vUv);
-              diffuseColor.rgb = sRGBTransferEOTF(diffuseColor.rgb);
+              vec4 diffuseColorSample = texture(albedoTexture, vUv);
+              diffuseColorSample.rgb = sRGBTransferEOTF(diffuseColorSample.rgb);
+              diffuseColor *= diffuseColorSample;
             #endif
             float alphaWidth = max(fwidth(diffuseColor.a), 1e-5);
             diffuseColor.a = smoothstep(alphaCutoff - alphaWidth, alphaCutoff + alphaWidth, diffuseColor.a);
+
+            float metallic = metallicFactor;
+            float roughness = roughnessFactor;
+
+            #ifdef USE_METALLIC_ROUGHNESS_TEXTURE
+              vec4 mr = texture(metallicRoughnessTexture, vUv);
+              roughness *= mr.g;
+              metallic *= mr.b;
+            #endif
+
+            float occlusion = 1.0;
+
+            #ifdef USE_OCCLUSION_TEXTURE
+              float ao = texture(occlusionTexture, vUv).r;
+              occlusion = mix(1.0, ao, occlusionStrength);
+            #endif
+
+            vec3 emissive = emissiveFactor;
+
+            #ifdef USE_EMISSIVE_TEXTURE
+              vec3 emissiveSample = texture(emissiveTexture, vUv).rgb;
+              emissiveSample = sRGBTransferEOTF(emissiveSample);
+              emissive *= emissiveSample;
+            #endif
+
+            emissive *= emissiveStrength;
+            diffuseColor.rgb += emissive;
 
             vec3 normal = normalize(vWorldNormal);
             #ifdef USE_NORMAL_TEXTURE

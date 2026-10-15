@@ -119,6 +119,7 @@ export interface GLTF {
     alphaMode?: 'OPAQUE' | 'MASK' | 'BLEND'
     alphaCutoff?: number
     doubleSided?: boolean
+    extensions?: Record<string, { emissiveStrength?: number }>
   }[]
 
   textures?: {
