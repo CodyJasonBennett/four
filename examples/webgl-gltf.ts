@@ -16,14 +16,26 @@ camera.position.set(-0.8706605684028507, 2.2165019092459364, 3.070496327098717)
 const controls = new OrbitControls(camera)
 controls.center.set(-0.5092487010358047, 1.097776895374574, -0.3392563821659754)
 controls.connect(renderer.canvas)
-// controls.enableZoom = false
-// controls.enableKeys = false
+controls.enableZoom = false
+controls.enableKeys = false
 controls.update()
 
 const scene = new Object3D()
 scene.matrixAutoUpdate = false
 
 const DEFAULT_ALBEDO_COLOR: [number, number, number, number] = [1, 1, 1, 1]
+const EMPTY_PIXEL = new Texture(new ImageData(new Uint8ClampedArray([0, 0, 0, 0]), 1, 1))
+
+const gl = renderer.gl
+const anistropyExt = gl.getExtension('EXT_texture_filter_anisotropic')
+const sampler = new Sampler({
+  anisotropy: anistropyExt ? gl.getParameter(anistropyExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1,
+  generateMipmaps: true,
+  magFilter: 'linear',
+  minFilter: 'linear',
+  wrapS: 'repeat',
+  wrapT: 'repeat',
+})
 
 for (const node of gltf.nodes!) {
   const mesh = gltf.meshes![node.mesh!]
@@ -38,7 +50,7 @@ for (const node of gltf.nodes!) {
       parseAccessor<Float32Array>(gltf, primitive.attributes.NORMAL),
       parseAccessor<Float32Array>(gltf, primitive.attributes.TEXCOORD_0),
       parseAccessor<Uint16Array | Uint32Array>(gltf, primitive.indices!),
-    ]).then(async ([meshVertices, meshNormals, meshUVs, meshIndices]) => {
+    ]).then(([meshVertices, meshNormals, meshUVs, meshIndices]) => {
       const geometry = new Geometry({
         position: { size: 3, data: meshVertices },
         normal: { size: 3, data: meshNormals },
@@ -49,33 +61,26 @@ for (const node of gltf.nodes!) {
       const materialProperties = gltf.materials![primitive.material!] ?? {}
       const pbr = materialProperties.pbrMetallicRoughness
 
-      const [albedoTexture, metallicRoughnessTexture, normalTexture, occlusionTexture, emissiveTexture] =
-        await Promise.all(
-          [
-            pbr?.baseColorTexture,
-            pbr?.metallicRoughnessTexture,
-            materialProperties.normalTexture,
-            materialProperties.occlusionTexture,
-            materialProperties.emissiveTexture,
-          ].map(async (textureInfo) => {
-            if (textureInfo == null) return null
+      const [albedoTexture, metallicRoughnessTexture, normalTexture, occlusionTexture, emissiveTexture] = [
+        pbr?.baseColorTexture,
+        pbr?.metallicRoughnessTexture,
+        materialProperties.normalTexture,
+        materialProperties.occlusionTexture,
+        materialProperties.emissiveTexture,
+      ].map((textureInfo) => {
+        if (textureInfo == null) return null
 
-            const gl = renderer.gl
-            const anistropyExt = gl.getExtension('EXT_texture_filter_anisotropic')
-            const sampler = new Sampler({
-              anisotropy: anistropyExt ? gl.getParameter(anistropyExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1,
-              generateMipmaps: true,
-              magFilter: 'linear',
-              minFilter: 'linear',
-              wrapS: 'repeat',
-              wrapT: 'repeat',
-            })
+        const texture = new Texture(EMPTY_PIXEL.image, sampler)
 
-            const image = await parseTexture(gltf, textureInfo.index)
+        parseTexture(gltf, textureInfo.index).then((image) => {
+          texture.image = image
+          texture.width = image.width
+          texture.height = image.height
+          texture.needsUpdate = true
+        })
 
-            return new Texture(image, sampler)
-          }),
-        )
+        return texture
+      })
 
       const emissiveStrengthExtension = materialProperties.extensions?.KHR_materials_emissive_strength
 
@@ -137,6 +142,7 @@ for (const node of gltf.nodes!) {
           }
         `,
         fragment: /* glsl */ `#version 300 es
+          ${materialProperties.doubleSided ? '#define DOUBLE_SIDED' : ''}
           ${albedoTexture ? '#define USE_ALBEDO_TEXTURE' : ''}
           ${metallicRoughnessTexture ? '#define USE_METALLIC_ROUGHNESS_TEXTURE' : ''}
           ${normalTexture ? '#define USE_NORMAL_TEXTURE' : ''}
@@ -271,26 +277,30 @@ for (const node of gltf.nodes!) {
             #endif
 
             vec3 emissive = emissiveFactor;
-
             #ifdef USE_EMISSIVE_TEXTURE
               vec3 emissiveSample = texture(emissiveTexture, vUv).rgb;
               emissiveSample = sRGBTransferEOTF(emissiveSample);
               emissive *= emissiveSample;
             #endif
-
             emissive *= emissiveStrength;
             diffuseColor.rgb += emissive;
 
             vec3 normal = normalize(vWorldNormal);
-            #ifdef USE_NORMAL_TEXTURE
-              mat3 tbn = getTangentFrame(-vWorldPosition, vWorldNormal, vUv);
-              normal = texture(normalTexture, vUv).rgb * 2.0 - 1.0;
-              normal = normalize(tbn * normal);
+            #ifdef DOUBLE_SIDED
+              float faceDirection = gl_FrontFacing ? 1.0 : -1.0;
+              normal *= faceDirection;
             #endif
-            float faceDirection = gl_FrontFacing ? 1.0 : -1.0;
-            normal *= faceDirection;
 
-            // diffuseColor = vec4(normal * 0.5 + 0.5, 1);
+            #ifdef USE_NORMAL_TEXTURE
+              mat3 tbn = getTangentFrame(-vWorldPosition, normal, vUv);
+              #ifdef DOUBLE_SIDED
+                tbn[0] *= faceDirection;
+                tbn[1] *= faceDirection;
+              #endif
+
+              vec3 normalMap = texture(normalTexture, vUv).rgb * 2.0 - 1.0;
+              normal = normalize(tbn * normalMap);
+            #endif
 
             vec3 luminance = diffuseColor.rgb;
             luminance *= exp2(exposure);

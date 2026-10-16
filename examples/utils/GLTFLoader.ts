@@ -18,7 +18,7 @@ class Queue {
   }
 }
 
-const networkQueue = new Queue(15)
+const networkQueue = new Queue(32)
 
 function batchedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   return networkQueue.run(() => fetch(input, init))
