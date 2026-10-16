@@ -247,7 +247,7 @@ export class WebGPURenderer {
 
   private _createBuffer(data: AttributeData, usage: GPUBufferUsageFlags): GPUBuffer {
     const buffer = this.device.createBuffer({
-      size: data.byteLength,
+      size: pad4(data.byteLength),
       usage: usage | GPU_BUFFER_USAGE_COPY_DST | GPU_BUFFER_USAGE_STORAGE,
       mappedAtCreation: true,
     })
@@ -263,16 +263,27 @@ export class WebGPURenderer {
     data: AttributeData,
     byteLength = data.byteLength,
     srcByteOffset = 0,
-    dstByteOffset = data.byteOffset,
+    dstByteOffset = 0,
   ): void {
-    const size = data.BYTES_PER_ELEMENT
-    this.device.queue.writeBuffer(
-      buffer,
-      dstByteOffset,
-      data as ArrayBufferView<ArrayBuffer>,
-      srcByteOffset / size,
-      byteLength / size,
-    )
+    const uploadSize = pad4(byteLength)
+
+    if (uploadSize === byteLength) {
+      const elementSize = data.BYTES_PER_ELEMENT
+      this.device.queue.writeBuffer(
+        buffer,
+        dstByteOffset,
+        data as ArrayBufferView<ArrayBuffer>,
+        srcByteOffset / elementSize,
+        byteLength / elementSize,
+      )
+    } else if (uploadSize !== byteLength) {
+      const source = new Uint8Array(data.buffer, data.byteOffset + srcByteOffset, byteLength)
+
+      const padded = new Uint8Array(uploadSize)
+      padded.set(source)
+
+      this.device.queue.writeBuffer(buffer, dstByteOffset, padded)
+    }
   }
 
   /**
