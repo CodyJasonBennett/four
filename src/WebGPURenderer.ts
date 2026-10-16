@@ -297,6 +297,7 @@ export class WebGPURenderer {
         addressModeV: GPU_WRAPPING[sampler.wrapT] as GPUAddressMode,
         magFilter: sampler.magFilter as GPUFilterMode,
         minFilter: sampler.minFilter as GPUFilterMode,
+        mipmapFilter: sampler.minFilter as GPUFilterMode,
         maxAnisotropy: sampler.anisotropy,
       })
       this._samplers.set(sampler, target)
@@ -324,6 +325,7 @@ export class WebGPURenderer {
           format: (texture.format as GPUTextureFormat | undefined) ?? this.format,
           dimension: '2d',
           size: [width, height, 1],
+          mipLevelCount: texture.sampler.generateMipmaps ? (1 + Math.log2(Math.max(width, height))) | 0 : undefined,
           usage:
             GPU_TEXTURE_USAGE_COPY_DST |
             GPU_TEXTURE_USAGE_TEXTURE_BINDING |
