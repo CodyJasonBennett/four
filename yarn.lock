@@ -353,3 +353,8 @@ vite@^6.2.5:
     rollup "^4.30.1"
   optionalDependencies:
     fsevents "~2.3.3"
+
+webgpu-utils@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/webgpu-utils/-/webgpu-utils-2.1.1.tgz#f9acf9781d14d407eb97e1e33eb3842084995fee"
+  integrity sha512-/v5I3DHwDdmznmPdFQsFfjOMSYTTvrtoflKyPjOMeXo+ND4l3BfvdLmJcI3+TjzM/54cxO174NKEkJ/5549xyQ==

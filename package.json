@@ -28,7 +28,8 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "typescript": "^5.8.3",
-    "vite": "^6.2.5"
+    "vite": "^6.2.5",
+    "webgpu-utils": "^2.1.1"
   },
   "dependencies": {
     "@webgpu/types": "^0.1.74"
