@@ -706,6 +706,8 @@ export class WebGLRenderer {
       this.setCullSide(node.material.side)
       this.setBlending(node.material.blending)
 
+      this.gl.frontFace(node.matrix.determinant() < 0 ? this.gl.CW : this.gl.CCW)
+
       const mode = this.gl[node.mode.toUpperCase() as Uppercase<Mode>]
       const { index, position } = node.geometry.attributes
       const { start, count } = node.geometry.drawRange
