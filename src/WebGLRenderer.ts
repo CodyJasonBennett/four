@@ -399,6 +399,21 @@ export class WebGLRenderer {
       FBO = this.gl.createFramebuffer()!
       this.gl.bindFramebuffer(GL_FRAMEBUFFER, FBO)
 
+      const depthRenderBuffer = this.gl.createRenderbuffer()!
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthRenderBuffer)
+      this.gl.renderbufferStorage(
+        this.gl.RENDERBUFFER,
+        this.gl.DEPTH_COMPONENT24,
+        renderTarget.width,
+        renderTarget.height,
+      )
+      this.gl.framebufferRenderbuffer(
+        this.gl.FRAMEBUFFER,
+        this.gl.DEPTH_ATTACHMENT,
+        this.gl.RENDERBUFFER,
+        depthRenderBuffer,
+      )
+
       const attachments: number[] = []
 
       let attachment = GL_COLOR_ATTACHMENT0
@@ -411,7 +426,10 @@ export class WebGLRenderer {
       this.gl.drawBuffers(attachments)
       renderTarget.needsUpdate = false
 
-      this._FBOs.set(renderTarget, FBO, () => this.gl.deleteFramebuffer(FBO!))
+      this._FBOs.set(renderTarget, FBO, () => {
+        this.gl.deleteRenderbuffer(depthRenderBuffer)
+        this.gl.deleteFramebuffer(FBO!)
+      })
     }
 
     this.gl.bindFramebuffer(GL_FRAMEBUFFER, FBO)
