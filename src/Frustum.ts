@@ -121,13 +121,16 @@ export class Frustum extends ARRAY_TYPE<number> {
 
     for (let i = 0; i < 6; i++) {
       const offset = i * 4
-      const distance =
-        this[offset] * mesh.matrix[12] +
-        this[offset + 1] * mesh.matrix[13] +
-        this[offset + 2] * mesh.matrix[14] +
-        this[offset + 3]
 
-      if (distance <= -radius) return false
+      const nx = this[offset]
+      const ny = this[offset + 1]
+      const nz = this[offset + 2]
+      const nw = this[offset + 3]
+
+      const distance = nx * mesh.matrix[12] + ny * mesh.matrix[13] + nz * mesh.matrix[14] + nw
+      const normalLength = sqrt(nx * nx + ny * ny + nz * nz)
+
+      if (distance <= -radius * normalLength) return false
     }
 
     return true

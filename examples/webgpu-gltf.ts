@@ -415,7 +415,6 @@ for (const node of gltf.nodes!) {
       mesh.scale.set(node.scale?.[0] ?? 1, node.scale?.[1] ?? 1, node.scale?.[2] ?? 1)
       mesh.position.set(node.translation?.[0] ?? 0, node.translation?.[1] ?? 0, node.translation?.[2] ?? 0)
       mesh.updateMatrix()
-      mesh.frustumCulled = false // TODO: fix culling for transformed nodes
 
       scene.add(mesh)
     })
