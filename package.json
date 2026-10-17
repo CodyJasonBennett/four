@@ -1,7 +1,7 @@
 {
   "name": "fourwastaken",
   "version": "0.5.0",
-  "description": "Minimal three.js alternative.",
+  "description": "A tiny Three.js-style library for WebGL, WebGPU, and GPU compute.",
   "keywords": [
     "3d",
     "graphics",

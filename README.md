@@ -4,7 +4,7 @@
 
 # four
 
-Minimal three.js alternative.
+A tiny modern Three.js-style library for WebGL, WebGPU, and GPU compute.
 
 ## Table of Contents
 
