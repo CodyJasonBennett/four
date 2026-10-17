@@ -6,7 +6,7 @@ import { parseAccessor, parseGLB, parseTexture } from './utils/GLTFLoader'
 const gltf = await parseGLB('/sponza-uncompressed.glb')
 console.log(gltf)
 
-const renderer = new WebGPURenderer()
+const renderer = new WebGPURenderer({ antialias: true, alpha: false })
 document.body.appendChild(renderer.canvas)
 
 const camera = new PerspectiveCamera(95, 1, 0.1, 1000)
@@ -78,7 +78,7 @@ for (const node of gltf.nodes!) {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               // @ts-ignore
-              const target = renderer._textures.get(texture)
+              const target = renderer._t.get(texture)
               if (target && 'mipLevelCount' in target && target.mipLevelCount > 1) {
                 generateMipmap(renderer.device, target)
               }

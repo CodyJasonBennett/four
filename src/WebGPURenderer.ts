@@ -134,6 +134,14 @@ export interface WebGPURendererOptions {
    */
   context: GPUCanvasContext
   /**
+   * Whether to draw with a transparent background. Default is `true`.
+   */
+  alpha: boolean
+  /**
+   * Whether to enable anti-aliasing for sharp corners. Default is `false`.
+   */
+  antialias: boolean
+  /**
    * An optional {@link GPUDevice} to send GPU commands to.
    */
   device: GPUDevice
@@ -168,9 +176,9 @@ export class WebGPURenderer {
    */
   public autoClear = true
   /**
-   * Number of samples to use for MSAA rendering. Default is `4`
+   * Number of samples to use for MSAA rendering. Default is `1`
    */
-  public samples = 4
+  public samples = 1
 
   private _buffers = new Compiled<Attribute, GPUBuffer>()
   private _geometry = new Compiled<Geometry, true>()
@@ -191,21 +199,30 @@ export class WebGPURenderer {
   private _renderTarget: RenderTarget | null = null
   private _v = new Vector3()
 
-  constructor({ canvas, context, format, device }: Partial<WebGPURendererOptions> = {}) {
+  constructor({
+    canvas,
+    context,
+    alpha = true,
+    antialias = false,
+    format,
+    device,
+  }: Partial<WebGPURendererOptions> = {}) {
     this.canvas = canvas ?? document.createElement('canvas')
     this.context = context ?? this.canvas.getContext('webgpu')!
     this.format = format ?? navigator.gpu.getPreferredCanvasFormat()
     this.device = device ?? _device!
+
+    this.context.configure({
+      device: this.device,
+      format: this.format,
+      alphaMode: alpha ? 'premultiplied' : 'opaque',
+    })
+    this.samples = antialias ? 4 : 1
+
     this._resizeSwapchain()
   }
 
   private _resizeSwapchain(): void {
-    this.context.configure({
-      device: this.device,
-      format: this.format,
-      alphaMode: 'premultiplied',
-    })
-
     const size = [this.canvas.width, this.canvas.height, 1]
     const usage = GPU_TEXTURE_USAGE_RENDER_ATTACHMENT
     const sampleCount = this.samples
@@ -458,7 +475,7 @@ export class WebGPURenderer {
             depthCompare,
             format: 'depth24plus-stencil8',
           },
-          multisample: { count: samples },
+          multisample: samples > 1 ? { count: samples } : undefined,
           layout: 'auto',
         })
       }
@@ -622,12 +639,15 @@ export class WebGPURenderer {
     }
 
     // FBOs don't support multisampling ATM due to the WebGL complexity
+    // TODO: this seems poorly behaved when rendering across configurations
     const samples = this.samples
     if (FBO) this.samples = 1
     else if (this._msaaTexture.sampleCount !== samples) this._resizeSwapchain()
 
-    const renderViews = FBO?.views ?? [this._msaaTextureView]
-    const resolveTarget = FBO ? undefined : this.context.getCurrentTexture().createView()
+    const renderViews = FBO?.views ?? [
+      samples > 1 ? this._msaaTextureView : this.context.getCurrentTexture().createView(),
+    ]
+    const resolveTarget = FBO || samples === 1 ? undefined : this.context.getCurrentTexture().createView()
     const loadOp: GPULoadOp = this.autoClear ? 'clear' : 'load'
     const storeOp: GPUStoreOp = 'store'
 
