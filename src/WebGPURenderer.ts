@@ -335,7 +335,7 @@ export class WebGPURenderer {
     if (!target || texture.needsUpdate) {
       texture.dispose()
 
-      if (texture.image instanceof HTMLVideoElement) {
+      if (typeof HTMLVideoElement !== 'undefined' && texture.image instanceof HTMLVideoElement) {
         target = this.device.importExternalTexture({ source: texture.image })
       } else {
         target = this.device.createTexture({

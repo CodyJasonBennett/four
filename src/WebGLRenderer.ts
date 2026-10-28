@@ -377,7 +377,10 @@ export class WebGLRenderer {
       this._updateSampler(texture.sampler)
     }
 
-    if (texture.needsUpdate && !(texture.image instanceof HTMLVideoElement)) {
+    if (
+      texture.needsUpdate &&
+      !(typeof HTMLVideoElement !== 'undefined' && texture.image instanceof HTMLVideoElement)
+    ) {
       texture.needsUpdate = false
     }
 
